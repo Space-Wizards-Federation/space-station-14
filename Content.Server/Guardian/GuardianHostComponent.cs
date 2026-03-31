@@ -23,7 +23,7 @@ namespace Content.Server.Guardian
         /// </summary>
         [ViewVariables] public ContainerSlot GuardianContainer = default!;
 
-        [DataField]
+        [DataField, AutoNetworkedField]
         public EntProtoId Action = "ActionToggleGuardian";
 
         [DataField] public EntityUid? ActionEntity;
