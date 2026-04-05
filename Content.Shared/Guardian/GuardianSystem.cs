@@ -389,16 +389,14 @@ namespace Content.Shared.Guardian
                 return;
             }
 
-            if (!host.Comp.GuardianContainer.Contains(guardian))
+            if (_container.Insert(guardian.Owner, host.Comp.GuardianContainer))
             {
-                Log.Debug("Host has no guardian!");
+                _popupSystem.PopupPredicted(Loc.GetString("guardian-entity-recall"), host.Owner, host.Owner);
+                guardian.Comp.GuardianLoose = false;
                 return;
             }
-            _container.Insert(guardian.Owner, host.Comp.GuardianContainer);
 
             DebugTools.Assert(host.Comp.GuardianContainer.Contains(guardian));
-            _popupSystem.PopupPredicted(Loc.GetString("guardian-entity-recall"), host.Owner, host.Owner);
-            guardian.Comp.GuardianLoose = false;
             Dirty(host);
             Dirty(guardian);
         }
