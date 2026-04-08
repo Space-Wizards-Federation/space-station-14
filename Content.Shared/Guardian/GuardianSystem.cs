@@ -195,7 +195,10 @@ namespace Content.Shared.Guardian
         {
             if (ent.Comp.Used)
             {
-                _popupSystem.PopupPredicted(Loc.GetString("guardian-activator-empty-invalid-creation"), user, user);
+                if(ent.Comp.Injector)
+                    _popupSystem.PopupPredicted(Loc.GetString("guardian-injector-empty-invalid-creation"), user, user);
+                if(ent.Comp.Deck)
+                    _popupSystem.PopupPredicted(Loc.GetString("guardian-deck-invalid-creation"), user, user);
                 return;
             }
 
@@ -241,7 +244,7 @@ namespace Content.Shared.Guardian
             if (TryComp<GuardianComponent>(guardian, out var guardianComp))
             {
                 guardianComp.Host = args.Args.Target.Value;
-                _audio.PlayPredicted((!ent.Comp.Magical ? guardianComp.InjectSound : guardianComp.DeckSound), ent.Owner, args.Args.Target);
+                _audio.PlayPredicted((!ent.Comp.Deck ? guardianComp.InjectSound : guardianComp.DeckSound), ent.Owner, args.Args.Target);
                 _popupSystem.PopupClient(Loc.GetString("guardian-created"), args.Args.Target.Value, args.Args.Target.Value);
                 // Exhaust the activator
                 ent.Comp.Used = true;
@@ -303,10 +306,14 @@ namespace Content.Shared.Guardian
         /// </summary>
         private void OnCreatorExamine(Entity<GuardianCreatorComponent> ent, ref ExaminedEvent args)
         {
-           if (ent.Comp.Used & !ent.Comp.Magical)
-               args.PushMarkup(Loc.GetString("guardian-activator-empty-examine"));
-           else
-               args.PushMarkup(Loc.GetString("guardian-wizard-activator-empty-examine"));
+            if (ent.Comp.Used)
+            {
+                if (ent.Comp.Injector)
+                    args.PushMarkup(Loc.GetString("guardian-injector-empty-examine"));
+
+                if (ent.Comp.Deck)
+                    args.PushMarkup(Loc.GetString("guardian-deck-used-examine"));
+            }
            Dirty(ent);
         }
 
