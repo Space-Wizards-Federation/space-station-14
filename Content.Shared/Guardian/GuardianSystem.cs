@@ -15,6 +15,7 @@ using Content.Shared.Mobs;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
 using Robust.Shared.Player;
+using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 
 namespace Content.Shared.Guardian
@@ -33,6 +34,7 @@ namespace Content.Shared.Guardian
         [Dependency] private readonly GibbingSystem _gibbing = null!;
         [Dependency] private readonly SharedContainerSystem _container = null!;
         [Dependency] private readonly SharedTransformSystem _transform = null!;
+        [Dependency] private readonly IGameTiming _timing = null!;
 
         public override void Initialize()
         {
@@ -389,14 +391,13 @@ namespace Content.Shared.Guardian
                 return;
             }
 
-            if (_container.Insert(guardian.Owner, host.Comp.GuardianContainer))
-            {
-                _popupSystem.PopupPredicted(Loc.GetString("guardian-entity-recall"), host.Owner, host.Owner);
-                guardian.Comp.GuardianLoose = false;
+            if (_timing.ApplyingState)
                 return;
-            }
 
-            DebugTools.Assert(host.Comp.GuardianContainer.Contains(guardian));
+            _container.Insert(guardian.Owner, host.Comp.GuardianContainer);
+            _popupSystem.PopupPredicted(Loc.GetString("guardian-entity-recall"), host.Owner, host.Owner);
+            guardian.Comp.GuardianLoose = false;
+
             Dirty(host);
             Dirty(guardian);
         }
