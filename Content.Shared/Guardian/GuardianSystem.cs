@@ -64,17 +64,17 @@ namespace Content.Shared.Guardian
 
         private void OnGuardianShutdown(Entity<GuardianComponent> ent, ref ComponentShutdown args)
         {
-            ent.Comp = null!;
 
             if (!TryComp(ent, out GuardianHostComponent? hostComponent))
                 return;
-
+            hostComponent = null!;
             _container.Remove(ent.Owner, hostComponent.GuardianContainer);
-            hostComponent.HostedGuardian = null!;
+            hostComponent.HostedGuardian = null;
             PredictedDel(hostComponent.ActionEntity);
             hostComponent.ActionEntity = null;
 
             Dirty(ent);
+            Dirty(ent, hostComponent);
         }
 
         private void OnPerformAction(Entity<GuardianHostComponent> ent, ref GuardianToggleActionEvent args)
@@ -101,7 +101,7 @@ namespace Content.Shared.Guardian
                 PredictedDel(ent.Owner);
                 return;
             }
-            Dirty(ent);
+
             RetractGuardian((ent.Comp.Host.Value, hostComponent), (ent.Owner, ent.Comp));
         }
 
@@ -236,7 +236,7 @@ namespace Content.Shared.Guardian
             var hostXform = Transform(args.Args.Target.Value);
             var host = EnsureComp<GuardianHostComponent>(args.Args.Target.Value);
             // Use map position so it's not inadvertently parented to the host + if it's in a container it spawns outside I guess.
-            var guardian = Spawn(ent.Comp.GuardianProto, _transform.GetMapCoordinates(args.Args.Target.Value, xform: hostXform));
+            var guardian = EntityManager.PredictedSpawn(ent.Comp.GuardianProto, _transform.GetMapCoordinates(args.Args.Target.Value, xform: hostXform));
 
             _container.Insert(guardian, host.GuardianContainer);
             host.HostedGuardian = guardian;
@@ -298,7 +298,6 @@ namespace Content.Shared.Guardian
                 ignoreResistances: true,
                 interruptsDoAfters: false);
             _popupSystem.PopupClient(Loc.GetString("guardian-entity-taking-damage"), ent.Comp.Host.Value, ent.Comp.Host.Value);
-            Dirty(ent);
         }
 
         /// <summary>
@@ -314,7 +313,6 @@ namespace Content.Shared.Guardian
                 if (ent.Comp.Deck)
                     args.PushMarkup(Loc.GetString("guardian-deck-used-examine"));
             }
-           Dirty(ent);
         }
 
         /// <summary>
@@ -328,7 +326,6 @@ namespace Content.Shared.Guardian
                 return;
             }
             CheckGuardianMove(ent.Owner, ent.Comp.HostedGuardian.Value);
-            Dirty(ent);
         }
 
         /// <summary>
@@ -342,7 +339,6 @@ namespace Content.Shared.Guardian
                 return;
 
             CheckGuardianMove(ent.Comp.Host.Value, ent.Owner);
-            Dirty(ent);
         }
 
         /// <summary>

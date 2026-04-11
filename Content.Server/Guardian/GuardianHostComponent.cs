@@ -28,7 +28,7 @@ namespace Content.Shared.Guardian.Components
         [DataField, AutoNetworkedField]
         public EntProtoId Action = "ActionToggleGuardian";
 
-        [DataField]
+        [DataField, AutoNetworkedField]
         public EntityUid? ActionEntity;
     }
 }
