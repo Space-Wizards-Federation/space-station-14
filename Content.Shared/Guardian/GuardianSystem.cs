@@ -109,7 +109,6 @@ namespace Content.Shared.Guardian
         private void OnGuardianPlayerAttached(Entity<GuardianComponent> ent, ref PlayerAttachedEvent args)
         {
             var host = ent.Comp.Host;
-            Dirty(ent);
             if (!HasComp<GuardianHostComponent>(host))
             {
                 PredictedDel(ent.Owner);
@@ -139,6 +138,7 @@ namespace Content.Shared.Guardian
             ent.Comp.HostedGuardian = null;
             PredictedDel(ent.Comp.ActionEntity);
             ent.Comp.ActionEntity = null;
+            Dirty(ent);
         }
 
         private void OnGuardianAttackAttempt(Entity<GuardianComponent> ent, ref AttackAttemptEvent args)
@@ -161,7 +161,6 @@ namespace Content.Shared.Guardian
 
         private void ToggleGuardian(Entity<GuardianHostComponent> ent)
         {
-
             if (!TryComp<GuardianComponent>(ent.Comp.HostedGuardian, out var guardianComponent))
                 return;
 
@@ -169,7 +168,6 @@ namespace Content.Shared.Guardian
                 RetractGuardian(ent, (ent.Comp.HostedGuardian.Value, guardianComponent));
             else
                 ReleaseGuardian(ent, (ent.Comp.HostedGuardian.Value, guardianComponent));
-            Dirty(ent);
         }
 
         /// <summary>
@@ -182,7 +180,6 @@ namespace Content.Shared.Guardian
 
             args.Handled = true;
             UseCreator(args.User, args.User, ent);
-            Dirty(ent);
         }
 
         private void OnCreatorInteract(Entity<GuardianCreatorComponent> ent, ref AfterInteractEvent args)
@@ -193,6 +190,7 @@ namespace Content.Shared.Guardian
             args.Handled = true;
             UseCreator(args.User, args.Target.Value, ent);
         }
+
         private void UseCreator(EntityUid user, EntityUid target, Entity<GuardianCreatorComponent> ent)
         {
             if (ent.Comp.Used)
@@ -282,7 +280,6 @@ namespace Content.Shared.Guardian
                     _audio.PlayPredicted(guardianComp.DeathSound, ent.Owner, args.Target);
                 RemComp<GuardianHostComponent>(ent.Owner);
             }
-            Dirty(ent);
         }
 
         /// <summary>
