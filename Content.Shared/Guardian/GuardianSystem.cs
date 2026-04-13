@@ -99,6 +99,7 @@ namespace Content.Shared.Guardian
                 TerminatingOrDeleted(ent.Owner))
             {
                 PredictedDel(ent.Owner);
+                ent.Comp.Host = null!;
                 return;
             }
 
@@ -112,6 +113,7 @@ namespace Content.Shared.Guardian
             if (!HasComp<GuardianHostComponent>(host))
             {
                 PredictedDel(ent.Owner);
+                ent.Comp.Host = null!;
                 return;
             }
 
@@ -134,6 +136,7 @@ namespace Content.Shared.Guardian
                 _gibbing.Gib(ent.Comp.HostedGuardian.Value);
 
             PredictedDel(guardian);
+            ent.Comp.HostedGuardian = null;
             PredictedDel(ent.Comp.ActionEntity);
             ent.Comp.ActionEntity = null;
         }
@@ -143,7 +146,6 @@ namespace Content.Shared.Guardian
             if (args.Cancelled || args.Target != ent.Comp.Host)
                 return;
 
-            // it's predicted now!
             _popupSystem.PopupPredictedCursor(Loc.GetString("guardian-attack-host"), ent.Owner, PopupType.LargeCaution);
             args.Cancel();
         }
@@ -240,7 +242,6 @@ namespace Content.Shared.Guardian
             var guardian = PredictedSpawnAtPosition(ent.Comp.GuardianProto, _transform.GetMoverCoordinates(args.Args.Target.Value, xform: hostXform));
             _container.Insert(guardian, host.GuardianContainer);
             host.HostedGuardian = guardian;
-            ent.Comp.GuardianProto = null!;
 
             if (TryComp<GuardianComponent>(guardian, out var guardianComp))
             {
@@ -257,7 +258,6 @@ namespace Content.Shared.Guardian
             }
             Dirty(ent);
             args.Handled = true;
-            host = null;
         }
 
         /// <summary>
