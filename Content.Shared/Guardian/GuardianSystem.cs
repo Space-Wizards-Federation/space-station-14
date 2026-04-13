@@ -235,11 +235,12 @@ namespace Content.Shared.Guardian
 
             var hostXform = Transform(args.Args.Target.Value);
             var host = EnsureComp<GuardianHostComponent>(args.Args.Target.Value);
-            // Use map position so it's not inadvertently parented to the host + if it's in a container it spawns outside I guess.
-            var guardian = EntityManager.PredictedSpawn(ent.Comp.GuardianProto, _transform.GetMapCoordinates(args.Args.Target.Value, xform: hostXform));
 
+            // Use map position so it's not inadvertently parented to the host + if it's in a container it spawns outside I guess.
+            var guardian = PredictedSpawnAtPosition(ent.Comp.GuardianProto, _transform.GetMoverCoordinates(args.Args.Target.Value, xform: hostXform));
             _container.Insert(guardian, host.GuardianContainer);
             host.HostedGuardian = guardian;
+            ent.Comp.GuardianProto = null!;
 
             if (TryComp<GuardianComponent>(guardian, out var guardianComp))
             {
@@ -256,6 +257,7 @@ namespace Content.Shared.Guardian
             }
             Dirty(ent);
             args.Handled = true;
+            host = null;
         }
 
         /// <summary>
