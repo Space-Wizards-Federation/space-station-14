@@ -134,7 +134,7 @@ namespace Content.Shared.Guardian
             if (HasComp<HandsComponent>(guardian))
                 _gibbing.Gib(ent.Comp.HostedGuardian.Value);
 
-            PredictedDel(guardian);
+            PredictedQueueDel(guardian);
             ent.Comp.HostedGuardian = null;
             PredictedDel(ent.Comp.ActionEntity);
             ent.Comp.ActionEntity = null;
