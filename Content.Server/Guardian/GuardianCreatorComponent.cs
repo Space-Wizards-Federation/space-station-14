@@ -34,8 +34,8 @@ namespace Content.Shared.Guardian.Components
         /// <summary>
         /// The prototype of the guardian entity which will be created
         /// </summary>
-        [DataField("guardianProto", customTypeSerializer:typeof(PrototypeIdSerializer<EntityPrototype>), required: true)]
-        public string GuardianProto { get; set; } = null!;
+        [DataField(required: true)]
+        public EntProtoId? GuardianProto { get; set; }
 
         /// <summary>
         /// How long it takes to inject someone.
