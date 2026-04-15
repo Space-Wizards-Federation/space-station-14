@@ -100,8 +100,8 @@ namespace Content.Shared.Guardian
                 TerminatingOrDeleted(ent.Owner))
             {
                 PredictedDel(ent.Owner);
-                Dirty(ent);
                 ent.Comp.Host = null;
+                Dirty(ent);
                 return;
             }
 
@@ -114,8 +114,8 @@ namespace Content.Shared.Guardian
             if (!HasComp<GuardianHostComponent>(host))
             {
                 PredictedDel(ent.Owner);
+                ent.Comp.Host = null;
                 Dirty(ent);
-                ent.Comp.Host = null!;
                 return;
             }
 
