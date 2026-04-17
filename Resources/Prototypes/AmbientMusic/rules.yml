@@ -4,21 +4,30 @@
   - !type:AlwaysTrueRule
 
 - type: rules
+  id: NearMedical
+  rules:
+  - !type:NearbyComponentsRule
+    components:
+    - type: AmbientMusicMarkerMedical
+    count: 3
+    range: 5
+
+- type: rules
+  id: NearEngineering
+  rules:
+  - !type:NearbyComponentsRule
+    components:
+    - type: AmbientMusicMarkerEngineering
+    count: 3
+    range: 5
+
+- type: rules
   id: InSpace
   rules:
   - !type:InSpaceRule
   - !type:GridInRangeRule
     inverted: true
     range: 3
-
-# TODO
-- type: rules
-  id: NearEngineering
-  rules:
-  - !type:NearbyAccessRule
-    access:
-    - Engineering
-    range: 2.5
 
 - type: rules
   id: NearMaintenance
@@ -39,16 +48,6 @@
     tiles:
     - TrainLattice
     range: 4
-
-- type: rules
-  id: NearMedical
-  rules:
-  - !type:NearbyTilesPercentRule
-    ignoreAnchored: true
-    percent: 0.5
-    tiles:
-    - FloorWhite
-    range: 3
 
 - type: rules
   id: NearPrayable
