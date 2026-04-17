@@ -196,7 +196,6 @@ public sealed partial class ContentAudioSystem
 
         if (_musicProto == null || _musicProto == _lastMusicProto)
         {
-            _sawmill.Log(LogLevel.Info, "same shit");
             _interruptable = false;
             return;
         }
