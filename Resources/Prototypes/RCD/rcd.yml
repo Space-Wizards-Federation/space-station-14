@@ -281,10 +281,22 @@
 # Xenoborg
 - type: rcd
   id: AirlockXenoborgLocked
-  category: Main
+  category: XenoborgAirlocks
   sprite: /Textures/Interface/Radial/RCD/xenoborg_airlock.png
   mode: ConstructObject
   prototype: AirlockXenoborgLocked
+  cost: 4
+  delay: 4
+  collisionMask: FullTileMask
+  rotation: Camera
+  fx: EffectRCDConstruct4
+
+- type: rcd
+  id: AirlockGlassShuttleXenoborgLocked
+  category: XenoborgAirlocks
+  sprite: /Textures/Interface/Radial/RCD/xenoborg_airlock_dock.png
+  mode: ConstructObject
+  prototype: AirlockGlassShuttleXenoborgLocked
   cost: 4
   delay: 4
   collisionMask: FullTileMask
