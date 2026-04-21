@@ -297,11 +297,11 @@
   sprite: /Textures/Interface/Radial/RCD/xenoborg_airlock_dock.png
   mode: ConstructObject
   prototype: AirlockGlassShuttleXenoborgLocked
-  cost: 4
+  cost: 5
   delay: 4
   collisionMask: FullTileMask
-  rotation: Camera
   fx: EffectRCDConstruct4
+  allowMultiDirection: true
 
 - type: rcd
   id: WallXenoborg
