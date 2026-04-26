@@ -1,4 +1,3 @@
-
 ## Guardian host specific
 
 guardian-created = You feel... Haunted.

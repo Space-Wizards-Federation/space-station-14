@@ -32,6 +32,12 @@ namespace Content.Server.Guardian
         [DataField]
         public bool GuardianLoose;
 
+        /// <remarks>
+        /// Popup showing that your host is getting injured.
+        /// </remarks>
+        [DataField]
+        public LocId GuardianDamagePopup = "guardian-entity-taking-damage";
+
         /// <summary>
         /// Sound played when a mob starts hosting the guardian.
         /// </summary>

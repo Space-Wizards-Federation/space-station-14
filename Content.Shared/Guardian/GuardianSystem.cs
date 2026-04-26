@@ -199,9 +199,9 @@ namespace Content.Shared.Guardian
             if (ent.Comp.Used)
             {
                 if(ent.Comp.Injector)
-                    _popupSystem.PopupPredicted(Loc.GetString("guardian-injector-empty-invalid-creation"), user, user);
+                    _popupSystem.PopupPredicted(Loc.GetString(ent.Comp.InjectorEmptyPopup), user, user);
                 if(ent.Comp.Deck)
-                    _popupSystem.PopupPredicted(Loc.GetString("guardian-deck-invalid-creation"), user, user);
+                    _popupSystem.PopupPredicted(Loc.GetString(ent.Comp.DeckUsedPopup), user, user);
                 return;
             }
 
@@ -248,7 +248,7 @@ namespace Content.Shared.Guardian
             {
                 guardianComp.Host = args.Args.Target.Value;
                 _audio.PlayPredicted((!ent.Comp.Deck ? guardianComp.InjectSound : guardianComp.DeckSound), ent.Owner, args.Args.Target);
-                _popupSystem.PopupClient(Loc.GetString("guardian-created"), args.Args.Target.Value, args.Args.Target.Value);
+                _popupSystem.PopupClient(Loc.GetString(ent.Comp.GuardianHauntedPopup), args.Args.Target.Value, args.Args.Target.Value);
                 // Exhaust the activator
                 ent.Comp.Used = true;
             }
@@ -273,7 +273,7 @@ namespace Content.Shared.Guardian
 
             if (args.NewMobState == MobState.Critical)
             {
-                _popupSystem.PopupClient(Loc.GetString("guardian-host-critical-warn"), ent.Comp.HostedGuardian.Value, ent.Comp.HostedGuardian.Value);
+                _popupSystem.PopupClient(Loc.GetString(ent.Comp.GuardianHostCritWarn), ent.Comp.HostedGuardian.Value, ent.Comp.HostedGuardian.Value);
                 if (guardianComp != null)
                     _audio.PlayPredicted(guardianComp.CriticalSound, ent.Comp.HostedGuardian.Value, args.Target);
             }
@@ -299,7 +299,7 @@ namespace Content.Shared.Guardian
                 origin: args.Origin,
                 ignoreResistances: true,
                 interruptsDoAfters: false);
-            _popupSystem.PopupClient(Loc.GetString("guardian-entity-taking-damage"), ent.Comp.Host.Value, ent.Comp.Host.Value);
+            _popupSystem.PopupClient(Loc.GetString(ent.Comp.GuardianDamagePopup), ent.Comp.Host.Value, ent.Comp.Host.Value);
         }
 
         /// <summary>
@@ -310,10 +310,10 @@ namespace Content.Shared.Guardian
             if (ent.Comp.Used)
             {
                 if (ent.Comp.Injector)
-                    args.PushMarkup(Loc.GetString("guardian-injector-empty-examine"));
+                    args.PushMarkup(Loc.GetString(ent.Comp.InjectorEmptyExamine));
 
                 if (ent.Comp.Deck)
-                    args.PushMarkup(Loc.GetString("guardian-deck-used-examine"));
+                    args.PushMarkup(Loc.GetString(ent.Comp.DeckUsedExamine));
             }
         }
 
@@ -400,7 +400,7 @@ namespace Content.Shared.Guardian
                 return;
 
             _container.Insert(guardian.Owner, host.Comp.GuardianContainer);
-            _popupSystem.PopupPredicted(Loc.GetString("guardian-entity-recall"), host.Owner, host.Owner);
+            _popupSystem.PopupPredicted(Loc.GetString(host.Comp.GuardianHostRecall), host.Owner, host.Owner);
             guardian.Comp.GuardianLoose = false;
 
             Dirty(host);

@@ -1,6 +1,5 @@
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype;
 
 namespace Content.Shared.Guardian.Components
 {
@@ -26,10 +25,40 @@ namespace Content.Shared.Guardian.Components
         public bool Injector;
 
         /// <remarks>
+        /// When the guardian creator has been used.
+        /// </remarks>
+        [DataField]
+        public LocId InjectorEmptyPopup = "guardian-injector-empty-invalid-creation";
+
+        /// <remarks>
+        /// Description of the used guardian creator.
+        /// </remarks>
+        [DataField]
+        public LocId InjectorEmptyExamine = "guardian-injector-empty-examine";
+
+        /// <remarks>
         /// For methods obtained through a deck.
         /// </remarks>
         [DataField, AutoNetworkedField]
         public bool Deck;
+
+        /// <remarks>
+        /// Shows when the deck can't produce a guardian.
+        /// </remarks>
+        [DataField]
+        public LocId DeckUsedPopup = "guardian-deck-invalid-creation";
+
+        /// <remarks>
+        /// Shows if the deck has been used before.
+        /// </remarks>
+        [DataField]
+        public LocId DeckUsedExamine = "guardian-deck-used-examine";
+
+        /// <remarks>
+        /// Text shown to the host indicating the creation was successful.
+        /// </remarks>
+        [DataField]
+        public LocId GuardianHauntedPopup = "guardian-created";
 
         /// <summary>
         /// The prototype of the guardian entity which will be created
