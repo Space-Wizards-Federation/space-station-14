@@ -129,6 +129,14 @@
   - TemperatureProtection
   - TypingIndicator
   - ScaleVisuals # for dwarf height
+  # horror related things
+  - MobThresholds
+  - SlowOnDamage
+  - Prying
+  - Tag
+  - PassiveDamage
+  - Damageable
+
   eventComponents:
   # these need special treatment in the event subscription
   - Inventory # arachnid pockets and diona feet
