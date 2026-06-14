@@ -152,10 +152,12 @@ public sealed partial class ChangelingTransformSystem : EntitySystem
 
         var time = ent.Comp.TransformWindup;
 
-        // the horror transformation is instant
+        // the horror transformation is instant & spawns a screech
         if (isHorror)
         {
             time = new TimeSpan(0);
+
+            Spawn("EffectScreech", Transform(ent.Owner).Coordinates);
         }
 
         _doAfter.TryStartDoAfter(new DoAfterArgs(
