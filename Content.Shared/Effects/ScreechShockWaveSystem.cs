@@ -8,11 +8,12 @@ public sealed partial class ScreechShockWaveSystem : EntitySystem
     public override void Initialize()
     {
         base.Initialize();
-        SubscribeLocalEvent<ScreechShockWaveComponent, MapInitEvent>(OnMapInit);
+        SubscribeLocalEvent<ScreechShockWaveComponent, MapInitEvent>(OnInit);
     }
 
-    private void OnMapInit(Entity<ScreechShockWaveComponent> ent, ref MapInitEvent args)
+    private void OnInit(Entity<ScreechShockWaveComponent> ent, ref MapInitEvent args)
     {
         ent.Comp.InitTime = _timing.CurTime;
+        Dirty<ScreechShockWaveComponent>(ent);
     }
 }

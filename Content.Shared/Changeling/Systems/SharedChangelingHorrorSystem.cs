@@ -1,4 +1,5 @@
 using Content.Shared.Changeling.Components;
+using Robust.Shared.Audio.Systems;
 using Robust.Shared.Serialization;
 
 namespace Content.Shared.Changeling.Systems;
@@ -6,20 +7,16 @@ namespace Content.Shared.Changeling.Systems;
 /// <summary>
 /// Handles transforming to / from the horror form.
 /// </summary>
-public sealed partial class ChangelingHorrorSystem : EntitySystem
+public abstract partial class SharedChangelingHorrorSystem : EntitySystem
 {
     [Dependency] private SharedChangelingIdentitySystem _identitySystem = default!;
+    [Dependency] private SharedAudioSystem _audio = default!;
 
     public override void Initialize()
     {
         base.Initialize();
         SubscribeLocalEvent<ChangelingIdentityComponent, ChangelingUnlockHorrorEvent>(OnUnlock);
-        SubscribeLocalEvent<ChangelingUnlockHorrorEvent>(OnDoThing);
-    }
-
-    private void OnDoThing(ChangelingUnlockHorrorEvent ev)
-    {
-        // do nuffin
+        SubscribeLocalEvent<ChangelingHorrorComponent, AfterChangelingTransformEvent>(OnAfterTransform);
     }
 
     private void OnUnlock(Entity<ChangelingIdentityComponent> ent, ref ChangelingUnlockHorrorEvent ev)
@@ -34,6 +31,20 @@ public sealed partial class ChangelingHorrorSystem : EntitySystem
 
         QueueDel(idEnt); // we dont need to keep this entity any longer
     }
+
+    protected virtual void OnAfterTransform(Entity<ChangelingHorrorComponent> ent, ref AfterChangelingTransformEvent ev)
+    {
+        // transformed into a changeling horror, spawn VFX station-wide, toggle actions, etc
+        if (!HasComp<ChangelingHorrorComponent>(ev.StoredIdentity))
+            return; // this shouldn't happen...
+
+        // spawn an evil-ass screech VFX
+        Spawn("EffectScreech", Transform(ent.Owner).Coordinates);
+
+        // play a spawn sound
+        _audio.PlayPredicted(ent.Comp.SpawnSound, ent.Owner, null);
+    }
+
 }
 
 /// <summary>

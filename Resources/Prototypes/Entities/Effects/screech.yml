@@ -2,6 +2,9 @@
   # Just fades out with no movement animation
   id: EffectScreech
   components:
+  - type: Sprite
+    sprite: Clothing/Head/Hats/magician.rsi
+    state: icon
   - type: TimedDespawn
     lifetime: 3.2
   - type: ScreechShockWave

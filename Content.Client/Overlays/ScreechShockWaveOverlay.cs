@@ -59,7 +59,8 @@ public sealed partial class ScreechShockWaveOverlay : Overlay
 
             var time = (float)(_timing.CurTime - distortion.InitTime).TotalSeconds;
             _fade = 1f - time / distortion.FadeTime;
-            return time < distortion.FadeTime;
+            if (time < distortion.FadeTime)
+                return true;
         }
 
         return false;

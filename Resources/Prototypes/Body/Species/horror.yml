@@ -139,7 +139,8 @@
   - type: Vocal
     screamAction: null # they dont get a scream action ):<
   - type: ChangelingHorror # marks them as a changeling horror
-
+    spawnAnnouncementSound:
+      path: /Audio/Animals/space_dragon_roar.ogg
 - type: entity
   parent: OrganBaseOrganic
   id: OrganHorror
