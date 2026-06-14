@@ -25,7 +25,13 @@ public sealed partial class ChangelingHorrorSystem : EntitySystem
     private void OnUnlock(Entity<ChangelingIdentityComponent> ent, ref ChangelingUnlockHorrorEvent ev)
     {
         var idEnt = Spawn("MobHorror"); // todo: make this into a generic system that unlocks identities (can be used for the lesser form etc.)
-        _identitySystem.GrantIdentity(ent, idEnt);
+        var identity = _identitySystem.GrantIdentity(ent, idEnt);
+        if (identity.HasValue)
+        {
+            AddComp(identity.Value, new UncountedIdentityComponent());
+            AddComp(identity.Value, new UnremovableIdentityComponent());
+        }
+
         QueueDel(idEnt); // we dont need to keep this entity any longer
     }
 }
