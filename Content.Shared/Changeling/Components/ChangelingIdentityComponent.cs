@@ -126,6 +126,12 @@ public sealed partial class ChangelingIdentityData
     {
         return $"{OriginalName} ({OriginalJob ?? "Unknown"}) - {Original}";
     }
+
+    [DataField]
+    public bool Removable = true;
+
+    [DataField]
+    public bool CountForCap = true;
 }
 
 /// <summary>

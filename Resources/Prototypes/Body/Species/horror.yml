@@ -136,6 +136,9 @@
     speedModifier: 4.0 # faster than the speed at which they can break down walls
     useSound:
       path: /Audio/Items/crowbar.ogg
+  - type: Vocal
+    screamAction: null # they dont get a scream action ):<
+  - type: ChangelingHorror # marks them as a changeling horror
 
 - type: entity
   parent: OrganBaseOrganic

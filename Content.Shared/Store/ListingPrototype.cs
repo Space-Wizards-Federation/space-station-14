@@ -60,7 +60,7 @@ public partial class ListingData : IEquatable<ListingData>
         EntProtoId? productAction,
         ProtoId<ListingPrototype>? productUpgradeId,
         EntityUid? productActionEntity,
-        object? productEvent,
+        EntityEventArgs? productEvent,
         bool raiseProductEventOnUser,
         int purchaseAmount,
         string id,
@@ -189,7 +189,7 @@ public partial class ListingData : IEquatable<ListingData>
     /// The event that is broadcast when the listing is purchased.
     /// </summary>
     [DataField]
-    public object? ProductEvent;
+    public EntityEventArgs? ProductEvent;
 
     [DataField]
     public bool RaiseProductEventOnUser;

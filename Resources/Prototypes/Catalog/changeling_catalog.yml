@@ -130,3 +130,21 @@
   - !type:ListingLimitedStockCondition
     stock: 1
   productAction: ActionChangelingStingHallucinogenic
+
+- type: listing
+  id: ChangelingHorrorForm
+  name: changeling-catalog-horror-form-name
+  description: changeling-catalog-horror-form-desc
+  icon: { sprite: /Textures/Interface/Actions/changeling2.rsi, state: hallucination_sting }
+  applyToMob: true
+  cost:
+    ChangelingDNA: 1
+  categories:
+  - ChangelingStoreCombat
+  conditions:
+  - !type:ListingLimitedStockCondition
+    stock: 1
+  productEvent: !type:ChangelingUnlockHorrorEvent
+  raiseProductEventOnUser: true
+
+

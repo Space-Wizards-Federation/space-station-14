@@ -22,6 +22,10 @@ changeling-devour-consume-complete-others = { CAPITALIZE(POSS-ADJ($user)) } unca
 changeling-transform-attempt-self = Our bones snap, muscles tear, one flesh becomes another.
 changeling-transform-attempt-others = { CAPITALIZE(POSS-ADJ($user)) } bones snap, muscles tear, body shifts into another.
 
+# horror transformation
+changeling-transform-horror-attempt-self = Our flesh rapidly expands as we reveal our otherwordly mouth bare.
+changeling-transform-horror-attempt-others = { CAPITALIZE(POSS-ADJ($user)) } flesh rapidly expands, exposing a terrifying mouth.
+
 # transformation BUI
 changeling-transform-bui-select-entity = {$entity}
 changeling-transform-bui-drop-identity-menu = Drop a devoured identity from your memory.

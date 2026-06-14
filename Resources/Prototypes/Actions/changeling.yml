@@ -60,6 +60,7 @@
     icon: { sprite : Interface/Actions/changeling.rsi, state: "transform" }
   - type: InstantAction
     event: !type:ChangelingTransformActionEvent
+  - type: ChangelingHorrorAwareAction # can't transform in horror form
 
 - type: entity
   parent: ActionIntrinsicStore
