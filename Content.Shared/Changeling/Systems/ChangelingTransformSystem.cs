@@ -128,8 +128,10 @@ public sealed partial class ChangelingTransformSystem : EntitySystem
         if (!Resolve(ent, ref ent.Comp))
             return;
 
-        var selfMessage = Loc.GetString("changeling-transform-attempt-self", ("user", Identity.Entity(ent.Owner, EntityManager)));
-        var othersMessage = Loc.GetString("changeling-transform-attempt-others", ("user", Identity.Entity(ent.Owner, EntityManager)));
+        // the horror form transforms instantly, has a different sound, plays different messages, etc
+        var isHorror = HasComp<ChangelingHorrorComponent>(targetIdentity);
+        var selfMessage = Loc.GetString( isHorror ? "changeling-transform-horror-attempt-self" : "changeling-transform-attempt-self", ("user", Identity.Entity(ent.Owner, EntityManager)));
+        var othersMessage = Loc.GetString(isHorror ? "changeling-transform-horror-attempt-others" : "changeling-transform-attempt-others", ("user", Identity.Entity(ent.Owner, EntityManager)));
         _popup.PopupPredicted(
             selfMessage,
             othersMessage,
@@ -148,10 +150,18 @@ public sealed partial class ChangelingTransformSystem : EntitySystem
         else
             _adminLogger.Add(LogType.Action, LogImpact.Medium, $"{ToPrettyString(ent.Owner):player} begun an attempt to transform into \"{Name(targetIdentity)}\"");
 
+        var time = ent.Comp.TransformWindup;
+
+        // the horror transformation is instant
+        if (isHorror)
+        {
+            time = new TimeSpan(0);
+        }
+
         _doAfter.TryStartDoAfter(new DoAfterArgs(
             EntityManager,
             ent,
-            ent.Comp.TransformWindup,
+            time,
             new ChangelingTransformDoAfterEvent(),
             ent,
             target: targetIdentity)

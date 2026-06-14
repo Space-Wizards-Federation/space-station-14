@@ -24,3 +24,6 @@ changeling-catalog-lethal-sting-desc = Causes very slow damage to the target. Us
 
 changeling-catalog-hallucinogenic-sting-name = Hallucinogenic Sting
 changeling-catalog-hallucinogenic-sting-desc = Causes the target to get high and have difficulty speaking. Causes confusion among the crew. Can be used on self.
+
+changeling-catalog-horror-form-name = Horror Form
+changeling-catalog-horror-form-desc = We reveal our true nature, transforming into a juggernaut of maw and flesh. However, this form is exhausting and cannot be maintained forever.
