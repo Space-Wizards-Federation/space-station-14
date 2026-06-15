@@ -1,4 +1,3 @@
-using Content.Server.Actions;
 using Content.Server.Chat.Systems;
 using Content.Shared.Chat;
 using Content.Shared.Chat.Prototypes;
@@ -17,14 +16,12 @@ public sealed partial class VocalSystem : EntitySystem
     [Dependency] private IPrototypeManager _proto = default!;
     [Dependency] private SharedAudioSystem _audio = default!;
     [Dependency] private ChatSystem _chat = default!;
-    [Dependency] private ActionsSystem _actions = default!;
 
     public override void Initialize()
     {
         base.Initialize();
 
         SubscribeLocalEvent<VocalComponent, MapInitEvent>(OnMapInit);
-        SubscribeLocalEvent<VocalComponent, ComponentShutdown>(OnShutdown);
         SubscribeLocalEvent<VocalComponent, SexChangedEvent>(OnSexChanged);
         SubscribeLocalEvent<VocalComponent, EmoteEvent>(OnEmote);
         SubscribeLocalEvent<VocalComponent, ScreamActionEvent>(OnScreamAction);
@@ -33,7 +30,7 @@ public sealed partial class VocalSystem : EntitySystem
     /// <summary>
     /// Copy this component's datafields from one entity to another.
     /// This can't use CopyComp because of the ScreamActionEntity DataField, which should not be copied.
-    /// <summary>
+    /// </summary>
     public void CopyComponent(Entity<VocalComponent?> source, EntityUid target)
     {
         if (!Resolve(source, ref source.Comp))
@@ -52,17 +49,7 @@ public sealed partial class VocalSystem : EntitySystem
     private void OnMapInit(EntityUid uid, VocalComponent component, MapInitEvent args)
     {
         // try to add scream action when vocal comp added
-        _actions.AddAction(uid, ref component.ScreamActionEntity, component.ScreamAction);
         LoadSounds(uid, component);
-    }
-
-    private void OnShutdown(EntityUid uid, VocalComponent component, ComponentShutdown args)
-    {
-        // remove scream action when component removed
-        if (component.ScreamActionEntity != null)
-        {
-            _actions.RemoveAction(uid, component.ScreamActionEntity);
-        }
     }
 
     private void OnSexChanged(EntityUid uid, VocalComponent component, SexChangedEvent args)
