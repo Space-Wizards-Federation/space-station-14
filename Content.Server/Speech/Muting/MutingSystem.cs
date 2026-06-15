@@ -41,7 +41,7 @@ namespace Content.Server.Speech.Muting
             if (!_prototypeManager.Resolve(args.Emote, out var emote))
                 return;
 
-            if (emote.Category != EmoteCategory.Vocal)
+            if (emote.Category.HasFlag(EmoteCategory.Vocal))
                 return;
 
             if (HasComp<MimePowersComponent>(uid))
