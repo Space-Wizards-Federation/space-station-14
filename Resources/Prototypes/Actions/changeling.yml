@@ -60,7 +60,6 @@
     icon: { sprite : Interface/Actions/changeling.rsi, state: "transform" }
   - type: InstantAction
     event: !type:ChangelingTransformActionEvent
-  - type: ChangelingHorrorAwareAction # can't transform in horror form
 
 - type: entity
   parent: ActionIntrinsicStore
@@ -187,6 +186,50 @@
   id: ActionChangelingStingHallucinogenic
   name: Hallucinogenic Sting
   description: Silently sting a target and inject them with chemicals that slow down their higher brain functions.
+  components:
+  - type: Action
+    useDelay: 90 # TODO: Chemical cost
+    raiseOnAction: true
+    itemIconStyle: BigAction
+    icon:
+      sprite: Interface/Actions/changeling2.rsi
+      state: hallucination_sting
+  - type: EntityEffectAction
+    effects:
+    - !type:AddReagentToBloodstream
+      reagent: SpaceDrugs
+      quantity: 10 # About 100s of being high
+    - !type:AddReagentToBloodstream
+      reagent: Cryptobiolin
+      quantity: 10 # About 20s of your speech being scrambled
+
+- type: entity
+  parent: BaseActionChangelingSting
+  id: ActionChangelingTestA
+  name: TEST ACTION A
+  description: IS ACTION A
+  components:
+  - type: Action
+    useDelay: 90 # TODO: Chemical cost
+    raiseOnAction: true
+    itemIconStyle: BigAction
+    icon:
+      sprite: Interface/Actions/changeling2.rsi
+      state: hallucination_sting
+  - type: EntityEffectAction
+    effects:
+    - !type:AddReagentToBloodstream
+      reagent: SpaceDrugs
+      quantity: 10 # About 100s of being high
+    - !type:AddReagentToBloodstream
+      reagent: Cryptobiolin
+      quantity: 10 # About 20s of your speech being scrambled
+
+- type: entity
+  parent: BaseActionChangelingSting
+  id: ActionChangelingTestB
+  name: TEST ACTION B
+  description: IS ACTION B
   components:
   - type: Action
     useDelay: 90 # TODO: Chemical cost

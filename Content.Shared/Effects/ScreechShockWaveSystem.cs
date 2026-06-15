@@ -14,6 +14,6 @@ public sealed partial class ScreechShockWaveSystem : EntitySystem
     private void OnInit(Entity<ScreechShockWaveComponent> ent, ref MapInitEvent args)
     {
         ent.Comp.InitTime = _timing.CurTime;
-        Dirty<ScreechShockWaveComponent>(ent);
+        Dirty(ent);
     }
 }

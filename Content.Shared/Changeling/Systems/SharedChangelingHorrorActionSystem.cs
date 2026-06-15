@@ -7,7 +7,7 @@ namespace Content.Shared.Changeling.Systems;
 /// <summary>
 /// Handles the changeling horror action system.
 /// </summary>
-public sealed partial class SharedChangelingHorrorActionSystem : EntitySystem
+public abstract partial class SharedChangelingHorrorActionSystem : EntitySystem
 {
     [Dependency] private SharedActionsSystem _actions = default!;
 
@@ -15,12 +15,89 @@ public sealed partial class SharedChangelingHorrorActionSystem : EntitySystem
     {
         base.Initialize();
         SubscribeLocalEvent<ChangelingHorrorActionComponent, MapInitEvent>(OnMapInit);
-        SubscribeLocalEvent<ChangelingHorrorActionStorageComponent, AfterChangelingTransformEvent>(AfterTransform);
+        SubscribeLocalEvent<ChangelingHorrorActionStorageComponent, ComponentShutdown>(OnShutdown);
+        SubscribeLocalEvent<ChangelingHorrorActionStorageComponent, MapInitEvent>(OnMapInit);
     }
 
-    private void AfterTransform(Entity<ChangelingHorrorActionStorageComponent> ent, ref AfterChangelingTransformEvent args)
+    private void OnMapInit(Entity<ChangelingHorrorActionStorageComponent> ent, ref MapInitEvent args)
     {
-        // do science to toggle things manually
+        ent.Comp.StoredIsHorror = !HasComp<ChangelingHorrorComponent>(ent.Owner);
+    }
+
+    private void OnShutdown(Entity<ChangelingHorrorActionStorageComponent> ent, ref ComponentShutdown args)
+    {
+        foreach (var action in ent.Comp.ActionEntities)
+        {
+            Del(action);
+        }
+
+        ent.Comp.ActionEntities.Clear();
+    }
+
+    /// <summary>
+    /// Retrieves horror actions & stores non horror actions
+    /// </summary>
+    /// <param name="ent">The changeling</param>
+    public void TransformToHorror(EntityUid ent)
+    {
+        if (TryComp<ChangelingHorrorActionStorageComponent>(ent, out var storage))
+        {
+            if (!storage.StoredIsHorror)
+            {
+                Log.Error("Changeling tried to morph into horror form but its actions are already the horror's");
+                return;
+            }
+            Toggle(ent);
+        }
+    }
+
+    /// <summary>
+    /// Retrieves non horror actions & stores horror actions
+    /// </summary>
+    /// <param name="ent">The changeling</param>
+    public void TransformFromHorror(EntityUid ent)
+    {
+        if (TryComp<ChangelingHorrorActionStorageComponent>(ent, out var storage))
+        {
+            if (storage.StoredIsHorror)
+            {
+                Log.Error("Changeling tried to morph from horror form but its actions are already normal");
+                return;
+            }
+            Toggle(ent);
+        }
+    }
+
+    private void Toggle(EntityUid ent)
+    {
+        var storage = EnsureComp<ChangelingHorrorActionStorageComponent>(ent);
+        var actionEnts = new List<EntityUid>();
+        foreach (var action in _actions.GetActions(ent))
+        {
+            if (HasComp<ChangelingHorrorAwareActionComponent>(action.Owner))
+            {
+                actionEnts.Add(action.Owner);
+            }
+        }
+
+        foreach (var action in storage.ActionEntities)
+        {
+            _actions.AddActionDirect(ent, action);
+        }
+
+        storage.ActionEntities.Clear();
+
+        foreach (var action in actionEnts)
+        {
+            _actions.SetTemporary(action, false);
+            _actions.RemoveAction(action);
+            storage.ActionEntities.Add(action);
+        }
+
+        // Toggle the flag
+        storage.StoredIsHorror = !storage.StoredIsHorror;
+        // networking
+        Dirty<ChangelingHorrorActionStorageComponent>((ent, storage));
     }
 
     private void OnMapInit(Entity<ChangelingHorrorActionComponent> ent, ref MapInitEvent args)
@@ -29,7 +106,6 @@ public sealed partial class SharedChangelingHorrorActionSystem : EntitySystem
         var storage = EnsureComp<ChangelingHorrorActionStorageComponent>(ent.Owner);
 
         // if they are in horror form, they get to immediately receive this action. Otherwise, it goes in the storage
-
         foreach (var action in ent.Comp.HorrorActions)
         {
             if (horrorForm)
@@ -44,7 +120,6 @@ public sealed partial class SharedChangelingHorrorActionSystem : EntitySystem
         }
 
         // the reverse
-
         foreach (var action in ent.Comp.NormalActions)
         {
             if (horrorForm)
@@ -58,15 +133,26 @@ public sealed partial class SharedChangelingHorrorActionSystem : EntitySystem
         }
 
 
-        RemCompDeferred<ChangelingHorrorComponent>(ent.Owner);
+        RemCompDeferred<ChangelingHorrorActionComponent>(ent.Owner);
+        // networking
+        Dirty<ChangelingHorrorActionStorageComponent>((ent, storage));
     }
 
     private void AddToPool(Entity<ChangelingHorrorActionStorageComponent> ent, EntProtoId action)
 
     {
-        var actionEntity = Spawn(action);
-        ent.Comp.ActionEntities.Add(actionEntity);
-        AddComp<ChangelingHorrorAwareActionComponent>(actionEntity);
+        // we add the action then removing, keeping it on the storage component
+        var id = _actions.AddAction(ent.Owner, action);
+        if (!id.HasValue)
+            return;
+
+        _actions.SetTemporary(id.Value, false);
+        _actions.RemoveAction(id);
+        AddComp<ChangelingHorrorAwareActionComponent>(id.Value);
+
+        // finaly sotre the action
+        var storage = EnsureComp<ChangelingHorrorActionStorageComponent>(ent.Owner);
+        storage.ActionEntities.Add(id.Value);
     }
 
     private void AddImmediate(EntityUid ent, EntProtoId action)
