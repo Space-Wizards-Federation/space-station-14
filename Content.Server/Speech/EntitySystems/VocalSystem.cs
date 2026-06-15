@@ -24,12 +24,11 @@ public sealed partial class VocalSystem : EntitySystem
         SubscribeLocalEvent<VocalComponent, MapInitEvent>(OnMapInit);
         SubscribeLocalEvent<VocalComponent, SexChangedEvent>(OnSexChanged);
         SubscribeLocalEvent<VocalComponent, EmoteEvent>(OnEmote);
-        SubscribeLocalEvent<VocalComponent, ScreamActionEvent>(OnScreamAction);
+        SubscribeLocalEvent<VocalComponent, EmoteActionEvent>(OnEmoteAction);
     }
 
     /// <summary>
     /// Copy this component's datafields from one entity to another.
-    /// This can't use CopyComp because of the ScreamActionEntity DataField, which should not be copied.
     /// </summary>
     public void CopyComponent(Entity<VocalComponent?> source, EntityUid target)
     {
@@ -38,7 +37,6 @@ public sealed partial class VocalSystem : EntitySystem
 
         var targetComp = EnsureComp<VocalComponent>(target);
         targetComp.Sounds = source.Comp.Sounds;
-        targetComp.ScreamId = source.Comp.ScreamId;
         targetComp.Wilhelm = source.Comp.Wilhelm;
         targetComp.WilhelmProbability = source.Comp.WilhelmProbability;
         LoadSounds(target, targetComp);
@@ -48,7 +46,6 @@ public sealed partial class VocalSystem : EntitySystem
 
     private void OnMapInit(EntityUid uid, VocalComponent component, MapInitEvent args)
     {
-        // try to add scream action when vocal comp added
         LoadSounds(uid, component);
     }
 
@@ -76,12 +73,12 @@ public sealed partial class VocalSystem : EntitySystem
         args.Handled = _chat.TryPlayEmoteSound(uid, _proto.Index(sounds), args.Emote);
     }
 
-    private void OnScreamAction(EntityUid uid, VocalComponent component, ScreamActionEvent args)
+    private void OnEmoteAction(EntityUid uid, VocalComponent component, EmoteActionEvent args)
     {
         if (args.Handled)
             return;
 
-        _chat.TryEmoteWithChat(uid, component.ScreamId);
+        _chat.TryEmoteWithChat(uid, args.Emote);
         args.Handled = true;
     }
 
