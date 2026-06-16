@@ -13,7 +13,7 @@ public sealed class HandheldGrinderInteractionTest : InteractionTest
     private static readonly EntProtoId Banana = "TestFoodBanana";
 
     [TestPrototypes]
-    private static readonly string TestPrototypes = $@"
+    private const string Prototypes = @"
 # A modified banana that can only be juiced.
 - type: entity
   parent: FoodBanana
