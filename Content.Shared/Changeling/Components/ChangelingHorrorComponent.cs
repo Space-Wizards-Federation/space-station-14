@@ -1,5 +1,6 @@
 using Robust.Shared.Audio;
 using Robust.Shared.GameStates;
+using Robust.Shared.Prototypes;
 
 namespace Content.Shared.Changeling.Components;
 
@@ -21,4 +22,10 @@ public sealed partial class ChangelingHorrorComponent : Component
     /// </summary>
     [DataField, AutoNetworkedField]
     public SoundSpecifier? SpawnSound;
+
+    /// <summary>
+    /// The screech vfx to spawn when the changeling turns into an horror
+    /// </summary>
+    [DataField]
+    public EntProtoId SpawnScreech = "EffectScreech";
 }

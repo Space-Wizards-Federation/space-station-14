@@ -50,8 +50,7 @@
   id: ChangelingHorrorDummy
   categories: [ HideSpawnMenu ]
   components:
-  - type: ChangelingHorrorAction
-    horrorActions:
+  - type: ChangelingHorrorActionStorage
+    actions:
     - ActionChangelingTestA
-    normalActions:
     - ActionChangelingTestB

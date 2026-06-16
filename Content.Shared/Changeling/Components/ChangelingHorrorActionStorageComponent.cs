@@ -1,22 +1,23 @@
 using Robust.Shared.GameStates;
+using Robust.Shared.Prototypes;
 
 namespace Content.Shared.Changeling.Components;
 
 /// <summary>
-/// Component used to store regular changeling actions when in horror form, and horror actions when in regular changeling form.
+/// Component used to store changeling horror form-exclusive actions.
 /// </summary>
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
 public sealed partial class ChangelingHorrorActionStorageComponent : Component
 {
     /// <summary>
-    /// The action entities stored within this component
+    /// The actions that will be granted in horror mode
     /// </summary>
-    [DataField, AutoNetworkedField]
-    public List<EntityUid> ActionEntities = new();
+    [DataField, AutoNetworkedField, AlwaysPushInheritance]
+    public List<EntProtoId> Actions = [];
 
     /// <summary>
-    /// If set to true, the stored actions are the horror form's
+    /// The actions that were granted and that will be deleted when turning back.
     /// </summary>
-    [DataField]
-    public bool StoredIsHorror = false;
+    [AutoNetworkedField]
+    public List<EntityUid> CreatedActions = [];
 }

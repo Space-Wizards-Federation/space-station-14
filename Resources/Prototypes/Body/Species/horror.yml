@@ -141,6 +141,8 @@
   - type: ChangelingHorror # marks them as a changeling horror
     spawnAnnouncementSound:
       path: /Audio/Animals/space_dragon_roar.ogg
+  - type: FlashImmunity # please no flashing :(
+
 - type: entity
   parent: OrganBaseOrganic
   id: OrganHorror
@@ -228,10 +230,6 @@
 - type: entity
   parent: [ OrganBaseEyes, OrganHorrorInternal, OrganHorrorExternal ]
   id: OrganHorrorEyes
-  components:
-  - type: VisualOrgan
-    data:
-      sprite: Mobs/Customization/eyes.rsi
 
 - type: entity
   parent: [ OrganBaseTongue, OrganHorrorInternal ]

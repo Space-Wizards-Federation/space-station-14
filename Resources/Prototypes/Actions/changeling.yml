@@ -19,6 +19,8 @@
       collection: gib # Placeholder
     retractSounds:
       collection: gib # Placeholder
+  - type: ChangelingHorrorDisable # horror form already has this inately
+    toggleOff: true
 
 - type: entity
   parent: BaseAction
@@ -69,6 +71,7 @@
   components:
   - type: Action
     icon: { sprite : Interface/Actions/changeling2.rsi, state: "shop" }
+  - type: ChangelingHorrorDisable # can't buy things while in horror mode (for now)
 
 - type: entity
   parent: BaseAction
