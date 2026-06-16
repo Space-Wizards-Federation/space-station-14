@@ -1,5 +1,9 @@
-﻿using Content.IntegrationTests.Tests.Interaction;
+﻿using System.Linq;
+using Content.IntegrationTests.Tests.Interaction;
+using Content.Shared.Chemistry.EntitySystems;
+using Content.Shared.Kitchen;
 using Content.Shared.Kitchen.Components;
+using Content.Shared.Kitchen.EntitySystems;
 using Robust.Shared.Prototypes;
 
 namespace Content.IntegrationTests.Tests.Kitchen;
@@ -30,32 +34,56 @@ public sealed class HandheldGrinderInteractionTest : InteractionTest
     [Test]
     public async Task GrindAndJuiceInHandheldGrindersTest()
     {
+        var grinderSys = SEntMan.System<SharedReagentGrinderSystem>();
+        var solutionSys = SEntMan.System<SharedSolutionContainerSystem>();
+
+        // Spawn an empty mortar
         await SpawnTarget(Mortar);
         var grinderComp = Comp<HandheldGrinderComponent>();
 
-        await InteractUsing(SteelSheet);
+        // Spawn steel sheets and get what solution they should grind into.
+        var sheetsEnt = await Spawn(SteelSheet);
+        var expectedGrinderSol = grinderSys.GetGrinderSolution(ToServer(sheetsEnt), GrinderProgram.Grind);
+
+        await Pickup(sheetsEnt);
+        await Interact();
 
         Assert.That(grinderComp.GrinderSolution, Is.Not.Null); // The grinder needs to have its valid solution resolved after interaction.
-        Assert.That(grinderComp.GrinderSolution.Value.Comp.Solution.Volume > 0f); // Steel shouldve been grinded just fine.
+        Assert.That(expectedGrinderSol!.Contents.SequenceEqual(grinderComp.GrinderSolution.Value.Comp.Solution.Contents)); // Check if the solution is the one we expected.
 
-        grinderComp.GrinderSolution.Value.Comp.Solution.RemoveAllSolution(); // Clean the solution, since we check if its empty after next interaction.
+
+        // Spawn a new grinder
+        await SpawnTarget(Mortar);
+        grinderComp = Comp<HandheldGrinderComponent>();
+        // Manually resolve the solution because the system only resolves it after a VALID interaction, and here we test an invalid one.
+        solutionSys.ResolveSolution(STarget.Value, grinderComp.SolutionName, ref grinderComp.GrinderSolution);
 
         await InteractUsing(Banana);
 
-        Assert.That(grinderComp.GrinderSolution.Value.Comp.Solution.Volume == 0f); // The banana shouldn't have been grinded, since it can only be juiced.
+        Assert.That(grinderComp.GrinderSolution!.Value.Comp.Solution.Volume == 0f); // The banana shouldn't have been grinded, since it can only be juiced.
 
+
+        // Now we test the juicer, so we spawn one.
         await SpawnTarget(Juicer);
         grinderComp = Comp<HandheldGrinderComponent>();
+        var bananaEnt = await Spawn(Banana);
+        var expectedJuicerSol = grinderSys.GetGrinderSolution(ToServer(bananaEnt), GrinderProgram.Juice);
 
-        await InteractUsing(Banana);
+        await Pickup(bananaEnt);
+        await Interact();
 
         Assert.That(grinderComp.GrinderSolution, Is.Not.Null); // Juicer has a valid solution.
-        Assert.That(grinderComp.GrinderSolution.Value.Comp.Solution.Volume > 0f); // The banana has been juiced.
+        Assert.That(expectedJuicerSol!.Contents.SequenceEqual(grinderComp.GrinderSolution.Value.Comp.Solution.Contents)); // The banana has been juiced.
 
-        grinderComp.GrinderSolution.Value.Comp.Solution.RemoveAllSolution(); // Clean the solution, since we check if its empty after next interaction.
+
+        // Spawn a new juicer
+        await SpawnTarget(Juicer);
+        grinderComp = Comp<HandheldGrinderComponent>();
+        // Manually resolve the solution because the system only resolves it after a VALID interaction, and here we test an invalid one.
+        solutionSys.ResolveSolution(STarget.Value, grinderComp.SolutionName, ref grinderComp.GrinderSolution);
 
         await InteractUsing(SteelSheet);
 
-        Assert.That(grinderComp.GrinderSolution.Value.Comp.Solution.Volume == 0f); // The steel cannot be juiced.
+        Assert.That(grinderComp.GrinderSolution!.Value.Comp.Solution.Volume == 0f); // The steel cannot be juiced.
     }
 }
