@@ -44,23 +44,26 @@ public sealed class HandheldGrinderInteractionTest : InteractionTest
         // Spawn steel sheets and get what solution they should grind into.
         var sheetsEnt = await Spawn(SteelSheet);
         var expectedGrinderSol = grinderSys.GetGrinderSolution(ToServer(sheetsEnt), GrinderProgram.Grind);
+        Assert.That(expectedGrinderSol, Is.Not.Null); // We expect a solution to exist, would suck if it didn't.
 
         await Pickup(sheetsEnt);
         await Interact();
 
         Assert.That(grinderComp.GrinderSolution, Is.Not.Null); // The grinder needs to have its valid solution resolved after interaction.
-        Assert.That(expectedGrinderSol!.Contents.SequenceEqual(grinderComp.GrinderSolution.Value.Comp.Solution.Contents)); // Check if the solution is the one we expected.
+        Assert.That(expectedGrinderSol.Contents.SequenceEqual(grinderComp.GrinderSolution.Value.Comp.Solution.Contents)); // Check if the solution is the one we expected.
 
 
         // Spawn a new grinder
         await SpawnTarget(Mortar);
         grinderComp = Comp<HandheldGrinderComponent>();
+
         // Manually resolve the solution because the system only resolves it after a VALID interaction, and here we test an invalid one.
         solutionSys.ResolveSolution(STarget.Value, grinderComp.SolutionName, ref grinderComp.GrinderSolution);
+        Assert.That(grinderComp.GrinderSolution, Is.Not.Null);
 
         await InteractUsing(Banana);
 
-        Assert.That(grinderComp.GrinderSolution!.Value.Comp.Solution.Volume == 0f); // The banana shouldn't have been grinded, since it can only be juiced.
+        Assert.That(grinderComp.GrinderSolution.Value.Comp.Solution.Volume == 0f); // The banana shouldn't have been ground, since it can only be juiced.
 
 
         // Now we test the juicer, so we spawn one.
@@ -68,22 +71,25 @@ public sealed class HandheldGrinderInteractionTest : InteractionTest
         grinderComp = Comp<HandheldGrinderComponent>();
         var bananaEnt = await Spawn(Banana);
         var expectedJuicerSol = grinderSys.GetGrinderSolution(ToServer(bananaEnt), GrinderProgram.Juice);
+        Assert.That(expectedJuicerSol, Is.Not.Null); // We expect a solution to exist, would suck if it didn't.
 
         await Pickup(bananaEnt);
         await Interact();
 
         Assert.That(grinderComp.GrinderSolution, Is.Not.Null); // Juicer has a valid solution.
-        Assert.That(expectedJuicerSol!.Contents.SequenceEqual(grinderComp.GrinderSolution.Value.Comp.Solution.Contents)); // The banana has been juiced.
+        Assert.That(expectedJuicerSol.Contents.SequenceEqual(grinderComp.GrinderSolution.Value.Comp.Solution.Contents)); // The banana has been juiced.
 
 
         // Spawn a new juicer
         await SpawnTarget(Juicer);
         grinderComp = Comp<HandheldGrinderComponent>();
+
         // Manually resolve the solution because the system only resolves it after a VALID interaction, and here we test an invalid one.
         solutionSys.ResolveSolution(STarget.Value, grinderComp.SolutionName, ref grinderComp.GrinderSolution);
+        Assert.That(grinderComp.GrinderSolution, Is.Not.Null);
 
         await InteractUsing(SteelSheet);
 
-        Assert.That(grinderComp.GrinderSolution!.Value.Comp.Solution.Volume == 0f); // The steel cannot be juiced.
+        Assert.That(grinderComp.GrinderSolution.Value.Comp.Solution.Volume == 0f); // The steel cannot be juiced.
     }
 }
