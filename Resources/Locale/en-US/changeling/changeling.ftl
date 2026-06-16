@@ -25,6 +25,9 @@ changeling-transform-attempt-others = { CAPITALIZE(POSS-ADJ($user)) } bones snap
 # horror transformation
 changeling-transform-horror-attempt-self = Our flesh rapidly expands as we reveal our otherwordly mouth bare.
 changeling-transform-horror-attempt-others = { CAPITALIZE(POSS-ADJ($user)) } flesh rapidly expands, exposing a terrifying mouth.
+changeling-horror-cc-announcement = Long range sensors signal the presence of biohazardous alien biomass on the station. Security level elevated.
+changeling-horror-alert-time-name = Remaining time
+changeling-flesh-clothing-alert-desc = When this counter reaches 0, we will have exhausted our strength.
 
 # transformation BUI
 changeling-transform-bui-select-entity = {$entity}

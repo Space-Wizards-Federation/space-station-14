@@ -1,3 +1,4 @@
+using Content.Shared.Alert;
 using Robust.Shared.Audio;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
@@ -5,7 +6,7 @@ using Robust.Shared.Prototypes;
 namespace Content.Shared.Changeling.Components;
 
 /// <summary>
-/// Marks an entity as a changeling horror & stores horror-related datafiels.
+/// Marks an entity as a changeling horror & stores horror-related datafields.
 /// </summary>
 [RegisterComponent, NetworkedComponent]
 [AutoGenerateComponentState]
@@ -28,4 +29,22 @@ public sealed partial class ChangelingHorrorComponent : Component
     /// </summary>
     [DataField]
     public EntProtoId SpawnScreech = "EffectScreech";
+
+    /// <summary>
+    /// The instant at which the changeling entered horror form
+    /// </summary>
+    [DataField, AutoNetworkedField]
+    public TimeSpan InitialTime = TimeSpan.Zero;
+
+    /// <summary>
+    /// The amount of time it can stay transformed, converted from its DNA
+    /// </summary>
+    [DataField, AutoNetworkedField]
+    public TimeSpan TimeBudget = TimeSpan.Zero;
+
+    /// <summary>
+    ///
+    /// </summary>
+    [DataField]
+    public ProtoId<AlertPrototype> TimeAlert = "ChangelingHorrorTime";
 }

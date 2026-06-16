@@ -1,9 +1,16 @@
 using Content.Shared.Actions;
+using Content.Shared.Alert;
 using Content.Shared.Changeling.Components;
+using Content.Shared.Cuffs;
+using Content.Shared.Cuffs.Components;
 using Content.Shared.Effects;
+using Content.Shared.FixedPoint;
 using Content.Shared.Rejuvenate;
+using Content.Shared.Store;
+using Content.Shared.Store.Components;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Serialization;
+using Robust.Shared.Timing;
 
 namespace Content.Shared.Changeling.Systems;
 
@@ -16,6 +23,10 @@ public abstract partial class SharedChangelingHorrorSystem : EntitySystem
     [Dependency] private SharedAudioSystem _audio = default!;
     [Dependency] private SharedActionsSystem _actions = default!;
     [Dependency] private ScreechShockWaveSystem _screech = default!;
+    [Dependency] private SharedCuffableSystem _cuffable = default!;
+    [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private SharedStoreSystem _stores = default!;
+    [Dependency] private AlertsSystem _alerts = default!;
 
     public override void Initialize()
     {
@@ -24,7 +35,15 @@ public abstract partial class SharedChangelingHorrorSystem : EntitySystem
         SubscribeLocalEvent<ChangelingHorrorComponent, AfterChangelingTransformEvent>(OnAfterTransform);
         SubscribeLocalEvent<ChangelingHorrorComponent, BeforeChangelingTransformEvent>(OnBeforeTransform);
     }
-
+    public override void Update(float frameTime)
+    {
+        base.Update(frameTime);
+        var enumerator = EntityQueryEnumerator<ChangelingHorrorComponent>();
+        while (enumerator.MoveNext(out var uid, out var comp))
+        {
+            _alerts.ShowAlert(uid, comp.TimeAlert);
+        }
+    }
     /// <summary>
     /// This function will only be executed when transforming to changeling horror to a "regular" person.
     /// </summary>
@@ -32,7 +51,7 @@ public abstract partial class SharedChangelingHorrorSystem : EntitySystem
     {
         // this event fires before the transformation (but after the doafter)
         if (HasComp<ChangelingHorrorComponent>(args.StoredIdentity))
-            return;
+            return; // we shouldn't be transforming into an horror!
 
         // enable actions again
         foreach (var action in _actions.GetActions(ent.Owner))
@@ -59,8 +78,13 @@ public abstract partial class SharedChangelingHorrorSystem : EntitySystem
             lingActions.CreatedActions.Clear();
         }
 
+        // Remove the alert that displays time
+        _alerts.ClearAlert(ent.Owner, ent.Comp.TimeAlert);
     }
 
+    /// <summary>
+    /// Fired when the horror mode is unlocked.
+    /// </summary>
     private void OnUnlock(Entity<ChangelingIdentityComponent> ent, ref ChangelingUnlockHorrorEvent ev)
     {
         var idEnt = Spawn("MobHorror"); // todo: make this into a generic system that unlocks identities (can be used for the lesser form etc.)
@@ -84,8 +108,35 @@ public abstract partial class SharedChangelingHorrorSystem : EntitySystem
         if (!HasComp<ChangelingHorrorComponent>(ev.StoredIdentity))
             return; // this shouldn't happen...
 
+        // calculate timing
+        var now = _timing.CurTime;
+        var transformationTime = TimeSpan.FromSeconds(5);// you get 5 free seconds!
+
+        if (TryComp<StoreComponent>(ent.Owner, out var store))
+        {
+            var k = store.Balance["ChangelingDNA"];
+            Dictionary<string, FixedPoint2> dico = new() {
+                {"ChangelingDNA", -k }
+                };
+            // remove all DNA points from the store, since they are being converted into time
+            _stores.TryAddCurrency(dico, ent.Owner);
+            transformationTime += TimeSpan.FromSeconds((double)k * 5d); // 5 seconds per DNA point
+        }
+
+        ent.Comp.TimeBudget = transformationTime;
+        ent.Comp.InitialTime = now;
+
+        // this alert will display the time
+        _alerts.ShowAlert(ent.Owner, ent.Comp.TimeAlert);
+
         // full heal
         RaiseLocalEvent(ent.Owner, new RejuvenateEvent());
+
+        // Uncuff
+        if (!TryComp<CuffableComponent>(ent.Owner, out _) || !_cuffable.TryGetLastCuff(ent.Owner, out var cuff))
+            return;
+
+        _cuffable.Uncuff(ent.Owner, ent.Owner, cuff.Value);
 
         // spawn an evil-ass screech VFX
         _screech.EntityScreech(ent.Owner, ent.Comp.SpawnScreech);
