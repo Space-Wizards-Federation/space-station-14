@@ -10,7 +10,7 @@ public sealed class HandheldGrinderInteractionTest : InteractionTest
     private static readonly EntProtoId Juicer = "HandheldJuicer";
 
     private static readonly EntProtoId SteelSheet = "SheetSteel1";
-    private static readonly EntProtoId Banana = "TestFoodBanana";
+    private static readonly string Banana = "TestFoodBanana";
 
     [TestPrototypes]
     private const string Prototypes = @"
