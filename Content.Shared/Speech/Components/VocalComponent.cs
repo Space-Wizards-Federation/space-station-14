@@ -4,6 +4,7 @@ using Robust.Shared.Audio;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype;
+using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.Dictionary;
 
 namespace Content.Shared.Speech.Components;
 
@@ -33,6 +34,14 @@ public sealed partial class VocalComponent : Component
     [DataField("wilhelmProbability")]
     [AutoNetworkedField]
     public float WilhelmProbability = 0.0002f;
+
+    [DataField("screamAction", customTypeSerializer: typeof(PrototypeIdSerializer<EntityPrototype>))]
+    [AutoNetworkedField]
+    public string? ScreamAction;
+
+    [DataField("screamActionEntity")]
+    [AutoNetworkedField]
+    public EntityUid? ScreamActionEntity;
 
     /// <summary>
     ///     Currently loaded emote sounds prototype, based on entity sex.
