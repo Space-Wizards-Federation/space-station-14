@@ -1,13 +1,9 @@
-using Content.Server.Ame.EntitySystems;
-using Content.Shared.Ame.Components;
-
-namespace Content.Server.Ame.Components;
+namespace Content.Shared.Ame.Components;
 
 /// <summary>
 /// The component used to make an entity part of the bulk machinery of an AntiMatter Engine.
-/// Connects to adjacent entities with this component or <see cref="AmeControllerComponent"/> to make an AME.
+/// Connects to adjacent entities with this component or the AME controller to make an AME.
 /// </summary>
-[Access(typeof(AmeShieldingSystem), typeof(AmeNodeGroup))]
 [RegisterComponent]
 public sealed partial class AmeShieldComponent : SharedAmeShieldComponent
 {

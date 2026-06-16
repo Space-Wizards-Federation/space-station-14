@@ -1,9 +1,8 @@
-using Content.Server.Ame.Components;
-using Content.Shared.Construction;
-using JetBrains.Annotations;
+using Content.Shared.Ame.Components;
 using Content.Shared.Examine;
+using JetBrains.Annotations;
 
-namespace Content.Server.Construction.Conditions;
+namespace Content.Shared.Construction.Conditions;
 
 [UsedImplicitly]
 [DataDefinition]
@@ -25,9 +24,8 @@ public sealed partial class AmeShieldIntegrity : IGraphCondition
             return true;
 
         if (CheckAbove)
-        {
             return shield.CoreIntegrity >= IntegrityThreshold;
-        }
+
         return shield.CoreIntegrity < IntegrityThreshold;
     }
 

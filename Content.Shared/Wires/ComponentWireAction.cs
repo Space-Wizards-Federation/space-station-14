@@ -1,6 +1,4 @@
-using Content.Shared.Wires;
-
-namespace Content.Server.Wires;
+namespace Content.Shared.Wires;
 
 /// <summary>
 ///     convenience class for wires that depend on the existence of some component to function. Slightly reduces boilerplate.

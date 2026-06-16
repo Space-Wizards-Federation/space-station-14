@@ -1,7 +1,7 @@
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.Array;
 
-namespace Content.Server.Wires;
+namespace Content.Shared.Wires;
 
 /// <summary>
 ///     WireLayout prototype.

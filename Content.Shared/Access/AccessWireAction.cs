@@ -1,10 +1,8 @@
-using Content.Server.Wires;
-using Content.Shared.Access;
 using Content.Shared.Access.Components;
 using Content.Shared.Access.Systems;
 using Content.Shared.Wires;
 
-namespace Content.Server.Access;
+namespace Content.Shared.Access;
 
 public sealed partial class AccessWireAction : ComponentWireAction<AccessReaderComponent>
 {
@@ -45,20 +43,13 @@ public sealed partial class AccessWireAction : ComponentWireAction<AccessReaderC
     public override void Update(Wire wire)
     {
         if (!IsPowered(wire.Owner))
-        {
             WiresSystem.TryCancelWireAction(wire.Owner, PulseTimeoutKey.Key);
-        }
     }
 
     private void AwaitPulseCancel(Wire wire)
     {
-        if (!wire.IsCut)
-        {
-            if (EntityManager.TryGetComponent<AccessReaderComponent>(wire.Owner, out var access))
-            {
-                EntityManager.System<AccessReaderSystem>().SetActive((wire.Owner, access), true);
-            }
-        }
+        if (!wire.IsCut && EntityManager.TryGetComponent<AccessReaderComponent>(wire.Owner, out var access))
+            EntityManager.System<AccessReaderSystem>().SetActive((wire.Owner, access), true);
     }
 
     private enum PulseTimeoutKey : byte

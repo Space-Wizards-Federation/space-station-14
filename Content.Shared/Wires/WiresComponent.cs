@@ -1,9 +1,10 @@
 using Robust.Shared.Audio;
+using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
 
-namespace Content.Server.Wires;
+namespace Content.Shared.Wires;
 
-[RegisterComponent]
+[RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
 public sealed partial class WiresComponent : Component
 {
     /// <summary>
@@ -22,14 +23,14 @@ public sealed partial class WiresComponent : Component
     ///     The serial number of this board. Randomly generated upon start,
     ///     does not need to be set.
     /// </summary>
-    [ViewVariables]
+    [ViewVariables, AutoNetworkedField]
     public string? SerialNumber { get; set; }
 
     /// <summary>
     ///     The seed that dictates the wires appearance, as well as
     ///     the status ordering on the UI client side.
     /// </summary>
-    [ViewVariables]
+    [ViewVariables, AutoNetworkedField]
     public int WireSeed { get; set; }
 
     /// <summary>
@@ -37,6 +38,15 @@ public sealed partial class WiresComponent : Component
     /// </summary>
     [ViewVariables]
     public List<Wire> WiresList { get; set; } = new();
+
+    [ViewVariables, AutoNetworkedField]
+    public ClientWire[] ClientWires { get; set; } = [];
+
+    [ViewVariables, AutoNetworkedField]
+    public StatusEntry[] StatusEntries { get; set; } = [];
+
+    [ViewVariables, AutoNetworkedField]
+    public string LocalizedBoardName { get; set; } = string.Empty;
 
     /// <summary>
     ///     Queue of wires saved while the wire's DoAfter event occurs, to prevent too much spam.

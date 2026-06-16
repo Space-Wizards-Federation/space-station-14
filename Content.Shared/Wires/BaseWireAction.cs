@@ -1,9 +1,8 @@
-using Content.Server.Power.EntitySystems;
 using Content.Shared.Administration.Logs;
 using Content.Shared.Database;
-using Content.Shared.Wires;
+using Content.Shared.Power.EntitySystems;
 
-namespace Content.Server.Wires;
+namespace Content.Shared.Wires;
 
 /// <summary><see cref="IWireAction" /></summary>
 [ImplicitDataDefinitionForInheritors]
@@ -44,7 +43,7 @@ public abstract partial class BaseWireAction : IWireAction
     public virtual StatusLightState? GetLightState(Wire wire) => null;
 
     public IEntityManager EntityManager = default!;
-    public WiresSystem WiresSystem = default!;
+    public SharedWiresSystem WiresSystem = default!;
 
     // not virtual so implementors are aware that they need a nullable here
     public abstract object? StatusKey { get; }
@@ -55,7 +54,7 @@ public abstract partial class BaseWireAction : IWireAction
         EntityManager = IoCManager.Resolve<IEntityManager>();
         _adminLogger = IoCManager.Resolve<ISharedAdminLogManager>();
 
-        WiresSystem = EntityManager.EntitySysManager.GetEntitySystem<WiresSystem>();
+        WiresSystem = EntityManager.EntitySysManager.GetEntitySystem<SharedWiresSystem>();
     }
 
     public virtual bool AddWire(Wire wire, int count) => count == 1;
@@ -86,6 +85,6 @@ public abstract partial class BaseWireAction : IWireAction
     /// <returns>true if powered, false otherwise</returns>
     protected bool IsPowered(EntityUid uid)
     {
-        return WiresSystem.IsPowered(uid, EntityManager);
+        return EntityManager.System<SharedPowerReceiverSystem>().IsPowered(uid);
     }
 }

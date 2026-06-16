@@ -1,10 +1,8 @@
-using Content.Server.Wires;
-using Content.Shared.Doors;
 using Content.Shared.Doors.Components;
 using Content.Shared.Doors.Systems;
 using Content.Shared.Wires;
 
-namespace Content.Server.Doors;
+namespace Content.Shared.Doors;
 
 public sealed partial class DoorTimingWireAction : ComponentWireAction<AirlockComponent>
 {
@@ -51,21 +49,13 @@ public sealed partial class DoorTimingWireAction : ComponentWireAction<AirlockCo
     public override void Update(Wire wire)
     {
         if (!IsPowered(wire.Owner))
-        {
             WiresSystem.TryCancelWireAction(wire.Owner, PulseTimeoutKey.Key);
-        }
     }
 
-    // timing timer??? ???
     private void AwaitTimingTimerFinish(Wire wire)
     {
-        if (!wire.IsCut)
-        {
-            if (EntityManager.TryGetComponent<AirlockComponent>(wire.Owner, out var door))
-            {
-                EntityManager.System<SharedAirlockSystem>().SetAutoCloseDelayModifier(door, 1f);
-            }
-        }
+        if (!wire.IsCut && EntityManager.TryGetComponent<AirlockComponent>(wire.Owner, out var door))
+            EntityManager.System<SharedAirlockSystem>().SetAutoCloseDelayModifier(door, 1f);
     }
 
     private enum PulseTimeoutKey : byte
