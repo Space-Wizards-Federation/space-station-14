@@ -4,7 +4,7 @@ using Content.Shared.Tag;
 using Robust.Shared.Containers;
 using Robust.Shared.Prototypes;
 
-namespace Content.Server.Construction.Components
+namespace Content.Shared.Construction.Components
 {
     [RegisterComponent]
     public sealed partial class MachineFrameComponent : Component

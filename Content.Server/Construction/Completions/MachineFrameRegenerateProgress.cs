@@ -1,5 +1,5 @@
-﻿using Content.Server.Construction.Components;
 using Content.Shared.Construction;
+using Content.Shared.Construction.Components;
 using JetBrains.Annotations;
 
 namespace Content.Server.Construction.Completions

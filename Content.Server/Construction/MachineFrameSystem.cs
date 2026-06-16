@@ -1,5 +1,6 @@
 using Content.Server.Construction.Components;
 using Content.Server.Stack;
+using Content.Shared.Construction;
 using Content.Shared.Construction.Components;
 using Content.Shared.Examine;
 using Content.Shared.Interaction;
@@ -11,7 +12,7 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Server.Construction;
 
-public sealed partial class MachineFrameSystem : EntitySystem
+public sealed partial class MachineFrameSystem : SharedMachineFrameSystem
 {
     [Dependency] private SharedContainerSystem _container = default!;
     [Dependency] private TagSystem _tag = default!;
@@ -193,32 +194,6 @@ public sealed partial class MachineFrameSystem : EntitySystem
         component.MaterialProgress[type] += needed;
         if (IsComplete(component))
             _popupSystem.PopupEntity(Loc.GetString("machine-frame-component-on-complete"), uid);
-
-        return true;
-    }
-
-    public bool IsComplete(MachineFrameComponent component)
-    {
-        if (!component.HasBoard)
-            return false;
-
-        foreach (var (type, amount) in component.MaterialRequirements)
-        {
-            if (component.MaterialProgress[type] < amount)
-                return false;
-        }
-
-        foreach (var (compName, info) in component.ComponentRequirements)
-        {
-            if (component.ComponentProgress[compName] < info.Amount)
-                return false;
-        }
-
-        foreach (var (tagName, info) in component.TagRequirements)
-        {
-            if (component.TagProgress[tagName] < info.Amount)
-                return false;
-        }
 
         return true;
     }
