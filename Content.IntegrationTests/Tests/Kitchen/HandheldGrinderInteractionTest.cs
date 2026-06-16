@@ -17,7 +17,7 @@ public sealed class HandheldGrinderInteractionTest : InteractionTest
 # A modified banana that can only be juiced.
 - type: entity
   parent: FoodBanana
-  id: {Banana.Id}
+  id: TestFoodBanana
   components:
   - type: Extractable
     grindableSolutionName: null
