@@ -4,7 +4,7 @@ using Content.Shared.Storage.Components;
 using Content.Shared.Tools.Systems;
 using JetBrains.Annotations;
 
-namespace Content.Server.Construction.Conditions
+namespace Content.Shared.Construction.Conditions
 {
     [UsedImplicitly]
     [DataDefinition]

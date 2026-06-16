@@ -3,7 +3,7 @@ using Content.Shared.Doors.Components;
 using Content.Shared.Examine;
 using JetBrains.Annotations;
 
-namespace Content.Server.Construction.Conditions
+namespace Content.Shared.Construction.Conditions
 {
     [UsedImplicitly]
     [DataDefinition]

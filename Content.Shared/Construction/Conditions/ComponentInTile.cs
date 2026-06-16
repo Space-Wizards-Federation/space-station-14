@@ -6,7 +6,7 @@ using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Utility;
 
-namespace Content.Server.Construction.Conditions
+namespace Content.Shared.Construction.Conditions
 {
     /// <summary>
     ///     Makes the condition fail if any entities on a tile have (or not) a component.

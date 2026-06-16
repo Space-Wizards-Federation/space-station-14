@@ -1,11 +1,10 @@
 using Content.Shared.Construction;
 using Content.Shared.Examine;
 using JetBrains.Annotations;
-using Robust.Server.Containers;
 using Robust.Shared.Containers;
 using Robust.Shared.Utility;
 
-namespace Content.Server.Construction.Conditions
+namespace Content.Shared.Construction.Conditions
 {
     [UsedImplicitly]
     [DataDefinition]
@@ -18,8 +17,8 @@ namespace Content.Server.Construction.Conditions
 
         public bool Condition(EntityUid uid, IEntityManager entityManager)
         {
-            var containerSystem = entityManager.EntitySysManager.GetEntitySystem<ContainerSystem>();
-            if (!containerSystem.TryGetContainer(uid, Container, out var container))
+            if (!entityManager.TryGetComponent(uid, out ContainerManagerComponent? containerManager) ||
+                !entityManager.System<SharedContainerSystem>().TryGetContainer(uid, Container, out var container, containerManager))
                 return false;
 
             return container.ContainedEntities.Count != 0;

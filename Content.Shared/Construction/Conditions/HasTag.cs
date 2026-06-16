@@ -1,11 +1,9 @@
 using Content.Shared.Construction;
 using JetBrains.Annotations;
-using Content.Shared.Doors.Components;
 using Content.Shared.Examine;
-using YamlDotNet.Core.Tokens;
 using Content.Shared.Tag;
 
-namespace Content.Server.Construction.Conditions
+namespace Content.Shared.Construction.Conditions
 {
     /// <summary>
     ///     This condition checks whether if an entity with the <see cref="TagComponent"/> possesses a specific tag

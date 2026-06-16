@@ -2,7 +2,7 @@ using Content.Shared.Chemistry.EntitySystems;
 using Content.Shared.Construction;
 using Content.Shared.Examine;
 
-namespace Content.Server.Construction.Conditions;
+namespace Content.Shared.Construction.Conditions;
 
 /// <summary>
 /// Requires that a certain solution be empty to proceed.
