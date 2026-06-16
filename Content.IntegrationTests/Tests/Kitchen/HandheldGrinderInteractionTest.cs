@@ -25,7 +25,7 @@ public sealed class HandheldGrinderInteractionTest : InteractionTest
 
     /// <summary>
     /// Spawns a mortar and grinds steel in it, then grinds an ungrindable banana.
-    /// Does the same with a juicer, but first a banana and then juicer.
+    /// Does the same with a juicer, but first a banana and then steel.
     /// </summary>
     [Test]
     public async Task GrindAndJuiceInHandheldGrindersTest()
