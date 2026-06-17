@@ -4,20 +4,15 @@ using Robust.Client.Graphics;
 
 namespace Content.Client.Effects;
 
+/// <summary>
+/// This system exists only to add the overlay
+/// </summary>
 public sealed partial class ScreechShockWaveSystem : EntitySystem
 {
     [Dependency] private IOverlayManager _overlayMan = default!;
 
     public override void Initialize()
     {
-        SubscribeLocalEvent<ScreechShockWaveComponent, ComponentStartup>(OnStartup);
-    }
-
-    private void OnStartup(Entity<ScreechShockWaveComponent> ent, ref ComponentStartup args)
-    {
-        if (!_overlayMan.HasOverlay<ScreechShockWaveOverlay>())
-        {
-            _overlayMan.AddOverlay(new ScreechShockWaveOverlay());
-        }
+        _overlayMan.AddOverlay(new ScreechShockWaveOverlay());
     }
 }

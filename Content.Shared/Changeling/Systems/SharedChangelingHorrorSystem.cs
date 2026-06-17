@@ -80,6 +80,16 @@ public abstract partial class SharedChangelingHorrorSystem : EntitySystem
 
         // Remove the alert that displays time
         _alerts.ClearAlert(ent.Owner, ent.Comp.TimeAlert);
+
+        // Add dna points back
+        if (TryComp<StoreComponent>(ent.Owner, out var store))
+        {
+            // do fancy math to add back DNA based on remaining time
+            Dictionary<string, FixedPoint2> dico = new() {
+                {"ChangelingDNA", TimeToDNA(ent.Comp.TimeBudget - (_timing.CurTime - ent.Comp.InitialTime)) }
+                };
+            _stores.TryAddCurrency(dico, ent.Owner);
+        }
     }
 
     /// <summary>
@@ -115,12 +125,12 @@ public abstract partial class SharedChangelingHorrorSystem : EntitySystem
         if (TryComp<StoreComponent>(ent.Owner, out var store))
         {
             var k = store.Balance["ChangelingDNA"];
+            // remove all DNA points from the store, since they are being converted into time
             Dictionary<string, FixedPoint2> dico = new() {
                 {"ChangelingDNA", -k }
                 };
-            // remove all DNA points from the store, since they are being converted into time
             _stores.TryAddCurrency(dico, ent.Owner);
-            transformationTime += TimeSpan.FromSeconds((double)k * 5d); // 5 seconds per DNA point
+            transformationTime = DNAToTime(k);
         }
 
         ent.Comp.TimeBudget = transformationTime;
@@ -176,7 +186,25 @@ public abstract partial class SharedChangelingHorrorSystem : EntitySystem
             }
         }
     }
+    #region helpers
+    /// <summary>
+    /// Converts an amount of DNA currency into horror mode time
+    /// </summary>
+    public static TimeSpan DNAToTime(FixedPoint2 dna)
+    {
+        return TimeSpan.FromSeconds((double)dna * 3d + 5d);
+    }
 
+    /// <summary>
+    /// Returns the horror mode time to its DNA worth. Note that going inbetween conversions is lossy.
+    /// </summary>
+    public static FixedPoint2 TimeToDNA(TimeSpan time)
+    {
+        var seconds = time.TotalSeconds - 5;
+        var dna = Math.Max(0, (int)(seconds / 3d));
+        return FixedPoint2.New(dna);
+    }
+    #endregion
 }
 
 /// <summary>
