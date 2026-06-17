@@ -111,7 +111,6 @@ def check_for_zip_download():
               "If you just want a Sandbox Server, you are following the wrong guide! You can download a premade server following the instructions here:"
               "https://docs.spacestation14.com/en/general-development/setup/server-hosting-tutorial.html \n"
               "Closing automatically in 30 seconds.")
-        time.sleep(30)
         exit(1)
 
 def check_path_for_git():
@@ -120,7 +119,6 @@ def check_path_for_git():
     """
     if shutil.which("git") is None:
         print("git not found in PATH. Ensure git is installed and in PATH and run this program again!")
-        time.sleep(30)
         exit(1)
 
 if __name__ == '__main__':
