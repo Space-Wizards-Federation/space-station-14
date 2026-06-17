@@ -69,6 +69,7 @@ public enum AtmosphereProcessingState : byte
     HighPressureDelta,
     DeltaPressure,
     Hotspots,
+    ChargedElectrovae,
     Superconductivity,
     PipeNet,
     AtmosDevices,
