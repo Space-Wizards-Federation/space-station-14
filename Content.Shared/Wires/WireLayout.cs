@@ -1,6 +1,7 @@
 using System.Linq;
 using Robust.Shared.Prototypes;
 using Robust.Shared.IoC;
+using Robust.Shared.Network;
 using Robust.Shared.Serialization;
 using Robust.Shared.Serialization.Manager;
 using Robust.Shared.Serialization.Markdown;
@@ -35,7 +36,7 @@ public sealed partial class WireLayoutPrototype : IPrototype, IInheritingPrototy
     ///     nothing (these are added upon layout
     ///     initialization)
     /// </summary>
-    [DataField("dummyWires")]
+    [DataField]
     [NeverPushInheritance]
     public int DummyWires { get; private set; } = default!;
 
@@ -120,6 +121,6 @@ public sealed class WireLayoutEntryListSerializer :
 
     private static bool IsClient(IDependencyCollection dependencies)
     {
-        return dependencies.GetRegisteredTypes().Any(type => type.FullName == "Robust.Client.IBaseClient");
+        return dependencies.Resolve<INetManager>().IsClient;
     }
 }
