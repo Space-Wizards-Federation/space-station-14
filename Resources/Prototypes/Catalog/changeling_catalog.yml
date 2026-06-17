@@ -135,7 +135,7 @@
   id: ChangelingHorrorForm
   name: changeling-catalog-horror-form-name
   description: changeling-catalog-horror-form-desc
-  icon: { sprite: /Textures/Interface/Actions/changeling2.rsi, state: hallucination_sting }
+  icon: { sprite: /Textures/Interface/Actions/changeling2.rsi, state: horror_shop }
   applyToMob: true
   cost:
     ChangelingDNA: 1

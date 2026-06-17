@@ -106,7 +106,7 @@ public sealed partial class ChangelingTransformSystem : EntitySystem
             {
                 // the horror mode transformation will cause some slight desync but that's a problem for later
                 // since stores aren't properly networked
-                if (_netMan.IsClient())
+                if (_netMan.IsClient)
                     return;
 
                 if (store.Balance.ContainsKey("ChangelingDNA"))
