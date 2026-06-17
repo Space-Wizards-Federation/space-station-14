@@ -109,8 +109,7 @@ def check_for_zip_download():
               "Such as information to download the engine or even the ability to even be able to create contributions. \n"
               "Please read and follow https://docs.spacestation14.com/en/general-development/setup/setting-up-a-development-environment.html \n"
               "If you just want a Sandbox Server, you are following the wrong guide! You can download a premade server following the instructions here:"
-              "https://docs.spacestation14.com/en/general-development/setup/server-hosting-tutorial.html \n"
-              "Closing automatically in 30 seconds.")
+              "https://docs.spacestation14.com/en/general-development/setup/server-hosting-tutorial.html")
         exit(1)
 
 def check_path_for_git():
