@@ -25,6 +25,8 @@ namespace Content.Client.Wires.UI
 
         private readonly Label _nameLabel;
         private readonly Label _serialLabel;
+        private readonly List<WireControl> _wireControls = new();
+        private readonly List<int> _wireIds = new();
         private readonly List<Control> _statusControls = new();
         private readonly List<object> _statusKeys = new();
 
@@ -238,7 +240,54 @@ namespace Content.Client.Wires.UI
             _nameLabel.Text = state.LocalizedBoardName;
             _serialLabel.Text = state.SerialNumber;
 
+            PopulateWireEntries(state);
+            PopulateStatusEntries(state.StatusEntries);
+        }
+
+        private void PopulateWireEntries(WiresComponent state)
+        {
+            if (WireEntriesChanged(state.ClientWires))
+                RebuildWireEntries(state);
+
+            foreach (var wire in state.ClientWires)
+            {
+                for (var i = 0; i < _wireIds.Count; i++)
+                {
+                    if (_wireIds[i] != wire.Id)
+                        continue;
+
+                    _wireControls[i].SetCut(wire.IsCut);
+                    break;
+                }
+            }
+        }
+
+        private bool WireEntriesChanged(IReadOnlyList<ClientWire> wires)
+        {
+            if (_wireControls.Count != wires.Count)
+                return true;
+
+            for (var i = 0; i < wires.Count; i++)
+            {
+                var wire = wires[i];
+
+                if (_wireIds[i] != wire.Id ||
+                    _wireControls[i].WireColor != wire.Color ||
+                    _wireControls[i].Letter != wire.Letter)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void RebuildWireEntries(WiresComponent state)
+        {
             _wiresHBox.RemoveAllChildren();
+            _wireControls.Clear();
+            _wireIds.Clear();
+
             var random = new Random(state.WireSeed);
             foreach (var wire in state.ClientWires)
             {
@@ -250,10 +299,12 @@ namespace Content.Client.Wires.UI
                     VerticalAlignment = VAlignment.Bottom
                 };
                 _wiresHBox.AddChild(control);
+                _wireControls.Add(control);
+                _wireIds.Add(wire.Id);
 
                 control.WireClicked += () =>
                 {
-                    OnAction?.Invoke(wire.Id, wire.IsCut ? WiresAction.Mend : WiresAction.Cut);
+                    OnAction?.Invoke(wire.Id, control.IsCut ? WiresAction.Mend : WiresAction.Cut);
                 };
 
                 control.ContactsClicked += () =>
@@ -261,8 +312,6 @@ namespace Content.Client.Wires.UI
                     OnAction?.Invoke(wire.Id, WiresAction.Pulse);
                 };
             }
-
-            PopulateStatusEntries(state.StatusEntries);
         }
 
         private void PopulateStatusEntries(StatusEntry[] statusEntries)
@@ -348,16 +397,23 @@ namespace Content.Client.Wires.UI
         private sealed class WireControl : Control
         {
             private IResourceCache _resourceCache;
+            private readonly WireRender _wire;
 
             private const string TextureContact = "/Textures/Interface/WireHacking/contact.svg.96dpi.png";
 
             public event Action? WireClicked;
             public event Action? ContactsClicked;
+            public WireColor WireColor { get; }
+            public WireLetter Letter { get; }
+            public bool IsCut { get; private set; }
 
             public WireControl(WireColor color, WireLetter letter, bool isCut, bool flip, bool mirror, int type,
                 IResourceCache resourceCache)
             {
                 _resourceCache = resourceCache;
+                WireColor = color;
+                Letter = letter;
+                IsCut = isCut;
 
                 HorizontalAlignment = HAlignment.Center;
                 MouseFilter = MouseFilterMode.Stop;
@@ -401,13 +457,22 @@ namespace Content.Client.Wires.UI
                 layout.AddChild(contact2);
                 LayoutContainer.SetPosition(contact2, new Vector2(0, 60));
 
-                var wire = new WireRender(color, isCut, flip, mirror, type, _resourceCache);
+                _wire = new WireRender(color, isCut, flip, mirror, type, _resourceCache);
 
-                layout.AddChild(wire);
-                LayoutContainer.SetPosition(wire, new Vector2(2, 16));
+                layout.AddChild(_wire);
+                LayoutContainer.SetPosition(_wire, new Vector2(2, 16));
 
                 ToolTip = color.Name();
                 MinSize = new Vector2(20, 102);
+            }
+
+            public void SetCut(bool isCut)
+            {
+                if (IsCut == isCut)
+                    return;
+
+                IsCut = isCut;
+                _wire.SetCut(isCut);
             }
 
             protected override void KeyBindDown(GUIBoundKeyEventArgs args)
@@ -437,7 +502,7 @@ namespace Content.Client.Wires.UI
             private sealed class WireRender : Control
             {
                 private readonly WireColor _color;
-                private readonly bool _isCut;
+                private bool _isCut;
                 private readonly bool _flip;
                 private readonly bool _mirror;
                 private readonly int _type;
@@ -473,6 +538,11 @@ namespace Content.Client.Wires.UI
                     _type = type;
 
                     SetSize = new Vector2(16, 50);
+                }
+
+                public void SetCut(bool isCut)
+                {
+                    _isCut = isCut;
                 }
 
                 protected override void Draw(DrawingHandleScreen handle)

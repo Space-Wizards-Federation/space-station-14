@@ -18,6 +18,7 @@ using Content.Shared.Tools.Systems;
 using Content.Shared.UserInterface;
 using Content.Shared.Verbs;
 using Robust.Shared.Audio.Systems;
+using Robust.Shared.Network;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
@@ -39,6 +40,7 @@ public abstract partial class SharedWiresSystem : EntitySystem
     [Dependency] private   SharedPopupSystem _popupSystem = default!;
     [Dependency] protected SharedToolSystem Tool = default!;
     [Dependency] protected SharedUserInterfaceSystem UI = default!;
+    [Dependency] private INetManager _net = default!;
     [Dependency] private EntityQuery<AppearanceComponent> _appearanceQuery = default!;
     [Dependency] private EntityQuery<HandsComponent> _handsQuery = default!;
     [Dependency] private EntityQuery<ToolComponent> _toolQuery = default!;
@@ -384,28 +386,31 @@ public abstract partial class SharedWiresSystem : EntitySystem
             return;
 
         var clientList = new List<ClientWire>();
+        var statuses = new List<(int position, object key, object value)>();
         foreach (var entry in wires.WiresList)
         {
             clientList.Add(new ClientWire(entry.Id, entry.IsCut, entry.Color, entry.Letter));
 
             var statusData = entry.Action?.GetStatusLightData(entry);
             if (statusData != null && entry.Action?.StatusKey != null)
-            {
-                wires.Statuses[entry.Action.StatusKey] = (entry.OriginalPosition, statusData);
-            }
+                statuses.Add((entry.OriginalPosition, entry.Action.StatusKey, statusData));
         }
 
-        var statuses = new List<(int position, object key, object value)>();
-        foreach (var (key, value) in wires.Statuses)
+        // TODO: This server check is temporary while client ignores wire actions (see WireLayoutEntryListSerializer).
+        // Otherwise it will ignore statuses until server state comes in and flicker for a single tick.
+        if (_net.IsServer || statuses.Count > 0)
         {
-            var valueCast = ((int position, StatusLightData? value)) value;
-            statuses.Add((valueCast.position, key, valueCast.value!));
-        }
+            wires.Statuses.Clear();
+            foreach (var (position, key, value) in statuses)
+            {
+                wires.Statuses[key] = (position, value);
+            }
 
-        statuses.Sort((a, b) => a.position.CompareTo(b.position));
+            statuses.Sort((a, b) => a.position.CompareTo(b.position));
+            wires.StatusEntries = statuses.Select(p => new StatusEntry(p.key, p.value)).ToArray();
+        }
 
         wires.ClientWires = clientList.ToArray();
-        wires.StatusEntries = statuses.Select(p => new StatusEntry(p.key, p.value)).ToArray();
         wires.LocalizedBoardName = Loc.GetString(wires.BoardName);
         Dirty(uid, wires);
     }
