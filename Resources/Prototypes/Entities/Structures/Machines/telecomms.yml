@@ -137,11 +137,12 @@
   - type: Appearance
   - type: AmbientOnPowered
   - type: AmbientSound
-    volume: -9
-    range: 5
     enabled: false
     sound:
-      path: /Audio/Ambience/Objects/server_fans.ogg
+      collection: ServerFans
+    params:
+      volume: -9
+      range: 5
   - type: WiresVisuals
   - type: Physics
     bodyType: Static
