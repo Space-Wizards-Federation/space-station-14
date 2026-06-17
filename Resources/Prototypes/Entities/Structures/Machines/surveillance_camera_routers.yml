@@ -36,12 +36,11 @@
     - type: Appearance
     - type: AmbientOnPowered
     - type: AmbientSound
+      volume: -9
+      range: 5
       enabled: false
       sound:
         collection: ServerFans
-      params:
-        volume: -9
-        range: 5
     - type: WiresVisuals
     - type: WiresPanel
 
@@ -171,12 +170,11 @@
     - type: Appearance
     - type: AmbientOnPowered
     - type: AmbientSound
+      volume: -9
+      range: 5
       enabled: false
       sound:
         collection: ServerFans
-      params:
-        volume: -9
-        range: 5
     - type: WiresVisuals
     - type: WiresPanel
 
