@@ -85,6 +85,7 @@ public abstract partial class SharedChangelingHorrorSystem : EntitySystem
 
                 // we apply a stun penality, you should transform back yourself!
                 _stuns.TryAddStunDuration(uid, TimeSpan.FromSeconds(10));
+                _stuns.TryKnockdown(uid, TimeSpan.FromSeconds(10));
             }
         }
     }

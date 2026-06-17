@@ -33,7 +33,6 @@ public sealed partial class ChangelingTransformSystem : EntitySystem
     [Dependency] private SharedContainerSystem _container = default!;
     [Dependency] private IdentitySystem _identity = default!;
     [Dependency] private SharedChangelingIdentitySystem _changelingIdentity = default!;
-    [Dependency] private INetManager _netMan = default!;
 
     private const string ChangelingBuiXmlGeneratedName = "ChangelingTransformBoundUserInterface";
     public override void Initialize()
@@ -106,7 +105,7 @@ public sealed partial class ChangelingTransformSystem : EntitySystem
             {
                 // the horror mode transformation will cause some slight desync but that's a problem for later
                 // since stores aren't properly networked
-                if (_netMan.IsClient)
+                if (_net.IsClient)
                     return;
 
                 if (store.Balance.ContainsKey("ChangelingDNA"))
