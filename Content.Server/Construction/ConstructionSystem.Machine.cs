@@ -5,6 +5,8 @@ namespace Content.Server.Construction;
 
 public sealed partial class ConstructionSystem
 {
+    [Dependency] private EntityQuery<MachineBoardComponent> _machineBoardQuery = default!;
+
     private void InitializeMachines()
     {
         SubscribeLocalEvent<MachineComponent, ComponentInit>(OnMachineInit);
@@ -41,7 +43,7 @@ public sealed partial class ConstructionSystem
             throw new Exception($"Couldn't insert board with prototype {component.Board} to machine with prototype {Prototype(uid)?.ID ?? "N/A"}!");
         }
 
-        if (!TryComp<MachineBoardComponent>(board, out var machineBoard))
+        if (!_machineBoardQuery.TryComp(board, out var machineBoard))
         {
             throw new Exception($"Entity with prototype {component.Board} doesn't have a {nameof(MachineBoardComponent)}!");
         }

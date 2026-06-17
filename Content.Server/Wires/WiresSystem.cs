@@ -8,6 +8,8 @@ namespace Content.Server.Wires;
 public sealed partial class WiresSystem : SharedWiresSystem
 {
     [Dependency] private ConstructionSystem _construction = default!;
+    [Dependency] private EntityQuery<ConstructionComponent> _constructionQuery = default!;
+    [Dependency] private EntityQuery<WiresPanelSecurityComponent> _wiresPanelSecurityQuery = default!;
 
     public override void Initialize()
     {
@@ -34,9 +36,9 @@ public sealed partial class WiresSystem : SharedWiresSystem
     private void OnWiresMapInit(EntityUid uid, WiresComponent component)
     {
         // Update the construction graph to make sure that it starts on the node specified by WiresPanelSecurityComponent.
-        if (TryComp<WiresPanelSecurityComponent>(uid, out var wiresPanelSecurity) &&
+        if (_wiresPanelSecurityQuery.TryComp(uid, out var wiresPanelSecurity) &&
             !string.IsNullOrEmpty(wiresPanelSecurity.SecurityLevel) &&
-            TryComp<ConstructionComponent>(uid, out var construction))
+            _constructionQuery.TryComp(uid, out var construction))
         {
             _construction.ChangeNode(uid, null, wiresPanelSecurity.SecurityLevel, true, construction);
         }

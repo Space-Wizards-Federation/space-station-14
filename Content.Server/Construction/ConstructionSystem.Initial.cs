@@ -31,6 +31,8 @@ namespace Content.Server.Construction
         [Dependency] private EntityLookupSystem _lookupSystem = default!;
         [Dependency] private SharedTransformSystem _transformSystem = default!;
         [Dependency] private EntityWhitelistSystem _whitelistSystem = default!;
+        [Dependency] private EntityQuery<HandsComponent> _handsQuery = default!;
+        [Dependency] private EntityQuery<StorageComponent> _storageQuery = default!;
 
         // --- WARNING! LEGACY CODE AHEAD! ---
         // This entire file contains the legacy code for initial construction.
@@ -51,7 +53,7 @@ namespace Content.Server.Construction
         {
             foreach (var item in _handsSystem.EnumerateHeld(user))
             {
-                if (TryComp(item, out StorageComponent? storage))
+                if (_storageQuery.TryComp(item, out var storage))
                 {
                     foreach (var storedEntity in storage.Container.ContainedEntities!)
                     {
@@ -69,7 +71,7 @@ namespace Content.Server.Construction
                     if(!containerSlot.ContainedEntity.HasValue)
                         continue;
 
-                    if (TryComp(containerSlot.ContainedEntity.Value, out StorageComponent? storage))
+                    if (_storageQuery.TryComp(containerSlot.ContainedEntity.Value, out var storage))
                     {
                         foreach (var storedEntity in storage.Container.ContainedEntities)
                         {
@@ -216,7 +218,7 @@ namespace Content.Server.Construction
                                 continue;
 
                             // Dump out any stored entities in used entity
-                            if (TryComp<StorageComponent>(entity, out var storage))
+                            if (_storageQuery.TryComp(entity, out var storage))
                             {
                                 _container.EmptyContainer(storage.Container);
                             }
@@ -272,7 +274,7 @@ namespace Content.Server.Construction
             var newEntityProto = graph.Nodes[edge.Target].Entity.GetId(null, user, new(EntityManager));
             var newEntity = SpawnAttachedTo(newEntityProto, coords, rotation: angle);
 
-            if (!TryComp(newEntity, out ConstructionComponent? construction))
+            if (!_constructionQuery.TryComp(newEntity, out var construction))
             {
                 Log.Error($"Initial construction does not have a valid target entity! It is missing a ConstructionComponent.\nGraph: {graph.ID}, Initial Target: {edge.Target}, Ent. Prototype: {newEntityProto}\nCreated Entity {ToPrettyString(newEntity)} will be deleted.");
                 Del(newEntity); // Screw you, make proper construction graphs.
@@ -351,7 +353,7 @@ namespace Content.Server.Construction
             if (!_actionBlocker.CanInteract(user, null))
                 return false;
 
-            if (!HasComp<HandsComponent>(user))
+            if (!_handsQuery.HasComp(user))
                 return false;
 
             foreach (var condition in constructionPrototype.Conditions)
@@ -471,7 +473,7 @@ namespace Content.Server.Construction
             }
 
             if (!_actionBlocker.CanInteract(user, null)
-                || !TryComp(user, out HandsComponent? hands) || _handsSystem.GetActiveItem((user, hands)) == null)
+                || !_handsQuery.TryComp(user, out var hands) || _handsSystem.GetActiveItem((user, hands)) == null)
             {
                 Cleanup();
                 return;

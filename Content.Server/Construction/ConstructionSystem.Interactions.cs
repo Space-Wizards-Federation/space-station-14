@@ -26,6 +26,9 @@ namespace Content.Server.Construction
     public sealed partial class ConstructionSystem
     {
         [Dependency] private IAdminLogManager _adminLogger = default!;
+        [Dependency] private EntityQuery<InternalTemperatureComponent> _internalTemperatureQuery = default!;
+        [Dependency] private EntityQuery<TemperatureComponent> _temperatureQuery = default!;
+        [Dependency] private EntityQuery<UnremoveableComponent> _unremoveableQuery = default!;
 #if EXCEPTION_TOLERANCE
         [Dependency] private IRuntimeLog _runtimeLog = default!;
 #endif
@@ -277,7 +280,7 @@ namespace Content.Server.Construction
                         return HandleResult.False;
 
                     // Unremovable items can't be inserted
-                    if(HasComp<UnremoveableComponent>(insert))
+                    if(_unremoveableQuery.HasComp(insert))
                         return HandleResult.False;
 
                     // If we're only testing whether this step would be handled by the given event, then we're done.
@@ -393,11 +396,11 @@ namespace Content.Server.Construction
 
                     // prefer using InternalTemperature since that's more accurate for cooking.
                     float temp;
-                    if (TryComp<InternalTemperatureComponent>(uid, out var internalTemp))
+                    if (_internalTemperatureQuery.TryComp(uid, out var internalTemp))
                     {
                         temp = internalTemp.Temperature;
                     }
-                    else if (TryComp<TemperatureComponent>(uid, out var tempComp))
+                    else if (_temperatureQuery.TryComp(uid, out var tempComp))
                     {
                         temp = tempComp.CurrentTemperature;
                     }
@@ -504,7 +507,7 @@ namespace Content.Server.Construction
                 _queuedUpdates.Remove(uid);
 
                 // Ensure the entity exists and has a Construction component.
-                if (!TryComp(uid, out ConstructionComponent? construction))
+                if (!_constructionQuery.TryComp(uid, out var construction))
                     continue;
 
 #if EXCEPTION_TOLERANCE

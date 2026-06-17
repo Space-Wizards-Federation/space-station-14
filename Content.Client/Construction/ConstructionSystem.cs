@@ -29,6 +29,7 @@ namespace Content.Client.Construction
         [Dependency] private SharedTransformSystem _transformSystem = default!;
         [Dependency] private SpriteSystem _sprite = default!;
         [Dependency] private PopupSystem _popupSystem = default!;
+        [Dependency] private EntityQuery<ConstructionGhostComponent> _constructionGhostQuery = default!;
 
         private readonly Dictionary<int, EntityUid> _ghosts = new();
 
@@ -232,7 +233,7 @@ namespace Content.Client.Construction
             if (!args.EntityUid.IsValid() || !IsClientSide(args.EntityUid))
                 return false;
 
-            if (!HasComp<ConstructionGhostComponent>(args.EntityUid))
+            if (!_constructionGhostQuery.HasComp(args.EntityUid))
                 return false;
 
             TryStartConstruction(args.EntityUid);

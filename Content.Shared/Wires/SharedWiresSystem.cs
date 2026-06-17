@@ -39,6 +39,12 @@ public abstract partial class SharedWiresSystem : EntitySystem
     [Dependency] private   SharedPopupSystem _popupSystem = default!;
     [Dependency] protected SharedToolSystem Tool = default!;
     [Dependency] protected SharedUserInterfaceSystem UI = default!;
+    [Dependency] private EntityQuery<AppearanceComponent> _appearanceQuery = default!;
+    [Dependency] private EntityQuery<HandsComponent> _handsQuery = default!;
+    [Dependency] private EntityQuery<ToolComponent> _toolQuery = default!;
+    [Dependency] private EntityQuery<WiresComponent> _wiresQuery = default!;
+    [Dependency] private EntityQuery<WiresPanelComponent> _wiresPanelQuery = default!;
+    [Dependency] private EntityQuery<WiresPanelSecurityComponent> _wiresPanelSecurityQuery = default!;
 
     private readonly Dictionary<EntityUid, List<ActiveWireAction>> _activeWires = new();
     private readonly List<(EntityUid, ActiveWireAction)> _finishedWires = new();
@@ -84,7 +90,7 @@ public abstract partial class SharedWiresSystem : EntitySystem
 
     public void StartWireAction(EntityUid owner, float delay, object key, TimedWireEvent onFinish)
     {
-        if (!HasComp<WiresComponent>(owner))
+        if (!_wiresQuery.HasComp(owner))
             return;
 
         if (!_activeWires.ContainsKey(owner))
@@ -111,7 +117,7 @@ public abstract partial class SharedWiresSystem : EntitySystem
     {
         foreach (var (owner, activeWires) in _activeWires)
         {
-            if (!HasComp<WiresComponent>(owner))
+            if (!_wiresQuery.HasComp(owner))
                 _activeWires.Remove(owner);
 
             foreach (var wire in activeWires)
@@ -486,7 +492,7 @@ public abstract partial class SharedWiresSystem : EntitySystem
         if (args.Handled)
             return;
 
-        if (!TryComp<ToolComponent>(args.Used, out var tool))
+        if (!_toolQuery.TryComp(args.Used, out var tool))
             return;
 
         if (!IsPanelOpen(uid))
@@ -550,7 +556,7 @@ public abstract partial class SharedWiresSystem : EntitySystem
 
     public void TryDoWireAction(EntityUid target, EntityUid user, int id, WiresAction action, WiresComponent? wires = null)
     {
-        if (!TryComp(user, out HandsComponent? handsComponent))
+        if (!_handsQuery.TryComp(user, out var handsComponent))
         {
             _popupSystem.PopupPredictedCursor(Loc.GetString("wires-component-ui-on-receive-message-no-hands"), user);
             return;
@@ -565,7 +571,7 @@ public abstract partial class SharedWiresSystem : EntitySystem
         if (!_hands.TryGetActiveItem((user, handsComponent), out var heldEntity))
             return;
 
-        if (!TryComp(heldEntity, out ToolComponent? tool))
+        if (!_toolQuery.TryComp(heldEntity, out var tool))
             return;
 
         TryDoWireAction(target, user, heldEntity.Value, id, action, wires, tool);
@@ -794,7 +800,7 @@ public abstract partial class SharedWiresSystem : EntitySystem
                 if (!string.IsNullOrEmpty(component.ExamineTextOpen))
                     args.PushMarkup(Loc.GetString(component.ExamineTextOpen));
 
-                if (TryComp<WiresPanelSecurityComponent>(uid, out var wiresPanelSecurity) &&
+                if (_wiresPanelSecurityQuery.TryComp(uid, out var wiresPanelSecurity) &&
                     wiresPanelSecurity.Examine != null)
                 {
                     args.PushMarkup(Loc.GetString(wiresPanelSecurity.Examine));
@@ -841,7 +847,7 @@ public abstract partial class SharedWiresSystem : EntitySystem
 
     protected void UpdateAppearance(EntityUid uid, WiresPanelComponent panel)
     {
-        if (TryComp<AppearanceComponent>(uid, out var appearance))
+        if (_appearanceQuery.TryComp(uid, out var appearance))
             Appearance.SetData(uid, WiresVisuals.MaintenancePanelState, panel.Open && panel.Visible, appearance);
     }
 
@@ -882,7 +888,7 @@ public abstract partial class SharedWiresSystem : EntitySystem
 
         // Listen, i don't know what the fuck this component does. it's stapled on shit for airlocks
         // but it looks like an almost direct duplication of WiresPanelComponent except with a shittier API.
-        if (TryComp<WiresPanelSecurityComponent>(entity, out var wiresPanelSecurity) &&
+        if (_wiresPanelSecurityQuery.TryComp(entity, out var wiresPanelSecurity) &&
             !wiresPanelSecurity.WiresAccessible)
             return false;
 
@@ -891,7 +897,7 @@ public abstract partial class SharedWiresSystem : EntitySystem
 
     private void OnAttemptOpenActivatableUI(EntityUid uid, ActivatableUIRequiresPanelComponent component, ActivatableUIOpenAttemptEvent args)
     {
-        if (args.Cancelled || !TryComp<WiresPanelComponent>(uid, out var wires))
+        if (args.Cancelled || !_wiresPanelQuery.TryComp(uid, out var wires))
             return;
 
         if (component.RequireOpen != wires.Open)
