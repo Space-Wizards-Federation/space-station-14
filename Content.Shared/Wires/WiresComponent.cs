@@ -4,7 +4,7 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Shared.Wires;
 
-[RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
+[RegisterComponent, NetworkedComponent, AutoGenerateComponentState(true)]
 public sealed partial class WiresComponent : Component
 {
     /// <summary>
@@ -38,6 +38,9 @@ public sealed partial class WiresComponent : Component
     /// </summary>
     [ViewVariables]
     public List<Wire> WiresList { get; set; } = new();
+
+    [ViewVariables]
+    public int BuiltWireSeed { get; set; }
 
     [ViewVariables, AutoNetworkedField]
     public ClientWire[] ClientWires { get; set; } = [];
