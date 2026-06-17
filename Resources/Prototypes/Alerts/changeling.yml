@@ -16,7 +16,7 @@
   id: ChangelingHorrorTime
   icons:
   - sprite: /Textures/Interface/Alerts/telltale_heart.rsi
-    state: telltale # its essence0 because i'm reusing the revenant font, it shoud be something more along the lines of "telltale"
+    state: telltale
   alertViewEntity: AlertChangelingHorrorTimeView
   name: changeling-horror-alert-time-name
   description: changeling-horror-alert-time-desc
@@ -30,7 +30,7 @@
     hideLeadingZeroes: false
   - type: Sprite
     sprite: /Textures/Interface/Alerts/essence_counter.rsi
-    state: essence0 # its useless here, its overwritten by the alert
+    state: essence0
     layers:
     - map: [ "enum.AlertVisualLayers.Base" ]
     - map: [ "1" ]
