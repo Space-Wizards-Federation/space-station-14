@@ -1,7 +1,7 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Content.Server.Construction.Components;
+using Content.Shared.Construction.Components;
 using Content.Shared.ActionBlocker;
 using Content.Shared.Construction;
 using Content.Shared.Construction.Prototypes;

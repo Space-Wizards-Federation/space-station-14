@@ -1,6 +1,6 @@
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Utility;
-using Content.Server.Construction.Components;
+using Content.Shared.Construction.Components;
 using Content.Shared.Construction.Prototypes;
 using Robust.Shared.GameObjects;
 using Robust.Shared.Prototypes;

@@ -1,5 +1,6 @@
 using Content.Server.GameTicking.Rules.VariationPass.Components;
 using Content.Server.Wires;
+using Content.Shared.Wires;
 using Content.Shared.Whitelist;
 using Robust.Shared.Random;
 

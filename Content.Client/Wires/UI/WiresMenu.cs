@@ -231,14 +231,14 @@ namespace Content.Client.Wires.UI
         }
 
 
-        public void Populate(WiresBoundUserInterfaceState state)
+        public void Populate(WiresComponent state)
         {
-            _nameLabel.Text = state.BoardName;
+            _nameLabel.Text = state.LocalizedBoardName;
             _serialLabel.Text = state.SerialNumber;
 
             _wiresHBox.RemoveAllChildren();
             var random = new Random(state.WireSeed);
-            foreach (var wire in state.WiresList)
+            foreach (var wire in state.ClientWires)
             {
                 var mirror = random.Next(2) == 0;
                 var flip = random.Next(2) == 0;
@@ -262,7 +262,7 @@ namespace Content.Client.Wires.UI
 
             _statusContainer.RemoveAllChildren();
 
-            foreach (var status in state.Statuses)
+            foreach (var status in state.StatusEntries)
             {
                 if (status.Value is StatusLightData statusLightData)
                 {

@@ -558,7 +558,6 @@ namespace Content.Client.Construction.UI
             system.ToggleCraftingWindow += SystemOnToggleMenu;
             system.FlipConstructionPrototype += SystemFlipConstructionPrototype;
             system.CraftingAvailabilityChanged += SystemCraftingAvailabilityChanged;
-            system.ConstructionGuideAvailable += SystemGuideAvailable;
             if (_uiManager.GetActiveUIWidgetOrNull<GameTopMenuBar>() != null)
             {
                 CraftingAvailable = system.CraftingEnabled;
@@ -575,7 +574,6 @@ namespace Content.Client.Construction.UI
             system.ToggleCraftingWindow -= SystemOnToggleMenu;
             system.FlipConstructionPrototype -= SystemFlipConstructionPrototype;
             system.CraftingAvailabilityChanged -= SystemCraftingAvailabilityChanged;
-            system.ConstructionGuideAvailable -= SystemGuideAvailable;
             _constructionSystem = null;
         }
 
@@ -624,20 +622,6 @@ namespace Content.Client.Construction.UI
 
             _selected = _prototypeManager.Index<ConstructionPrototype>(_selected.Mirror);
             UpdateGhostPlacement();
-        }
-
-        private void SystemGuideAvailable(object? sender, string e)
-        {
-            if (!CraftingAvailable)
-                return;
-
-            if (!WindowOpen)
-                return;
-
-            if (_selected == null)
-                return;
-
-            PopulateInfo(_selected);
         }
     }
 }

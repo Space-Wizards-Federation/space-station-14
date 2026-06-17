@@ -1,8 +1,8 @@
-﻿using Content.Shared.Construction.Components;
+using Content.Shared.Construction.Components;
 using Robust.Shared.Containers;
 using Robust.Shared.Prototypes;
 
-namespace Content.Server.Construction.Components;
+namespace Content.Shared.Construction.Components;
 
 [RegisterComponent]
 public sealed partial class MachineComponent : Component

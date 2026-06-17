@@ -2,6 +2,8 @@
 using Content.Server.Doors;
 using Content.Server.Power;
 using Content.Server.Wires;
+using Content.Shared.Doors;
+using Content.Shared.Wires;
 using Robust.Shared.GameObjects;
 using Robust.Shared.IoC;
 using Robust.Shared.Map;
@@ -60,8 +62,6 @@ public sealed class WireLayoutTest : GameTest
 
         await server.WaitAssertion(() =>
         {
-            var wires = IoCManager.Resolve<IEntitySystemManager>().GetEntitySystem<WiresSystem>();
-
             // Need to spawn these entities to make sure the wire layouts are initialized.
             var ent1 = SpawnWithComp<WiresComponent>(server.EntMan, "WireLayoutTest", testMap.MapCoords);
             var ent2 = SpawnWithComp<WiresComponent>(server.EntMan, "WireLayoutTest2", testMap.MapCoords);

@@ -31,7 +31,6 @@ namespace Content.Client.Construction
         [Dependency] private PopupSystem _popupSystem = default!;
 
         private readonly Dictionary<int, EntityUid> _ghosts = new();
-        private readonly Dictionary<string, ConstructionGuide> _guideCache = new();
 
         private readonly Dictionary<string, string> _recipesMetadataCache = [];
 
@@ -48,7 +47,6 @@ namespace Content.Client.Construction
             SubscribeLocalEvent<PrototypesReloadedEventArgs>(OnPrototypeReload);
             SubscribeLocalEvent<LocalPlayerAttachedEvent>(HandlePlayerAttached);
             SubscribeNetworkEvent<AckStructureConstructionMessage>(HandleAckStructure);
-            SubscribeNetworkEvent<ResponseConstructionGuide>(OnConstructionGuideReceived);
 
             CommandBinds.Builder
                 .Bind(ContentKeyFunctions.OpenCraftingMenu,
@@ -144,27 +142,12 @@ namespace Content.Client.Construction
             }
         }
 
-        private void OnConstructionGuideReceived(ResponseConstructionGuide ev)
-        {
-            _guideCache[ev.ConstructionId] = ev.Guide;
-            ConstructionGuideAvailable?.Invoke(this, ev.ConstructionId);
-        }
-
         /// <inheritdoc />
         public override void Shutdown()
         {
             base.Shutdown();
 
             CommandBinds.Unregister<ConstructionSystem>();
-        }
-
-        public ConstructionGuide? GetGuide(ConstructionPrototype prototype)
-        {
-            if (_guideCache.TryGetValue(prototype.ID, out var guide))
-                return guide;
-
-            RaiseNetworkEvent(new RequestConstructionGuide(prototype.ID));
-            return null;
         }
 
         private void HandleConstructionGhostExamined(EntityUid uid, ConstructionGhostComponent component, ExaminedEvent args)
@@ -197,7 +180,6 @@ namespace Content.Client.Construction
         }
 
         public event EventHandler<CraftingAvailabilityChangedArgs>? CraftingAvailabilityChanged;
-        public event EventHandler<string>? ConstructionGuideAvailable;
         public event EventHandler? ToggleCraftingWindow;
         public event EventHandler? FlipConstructionPrototype;
 

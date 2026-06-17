@@ -7,7 +7,7 @@ using System.Reflection;
 using Content.Client.Construction;
 using Content.IntegrationTests.Tests.Helpers;
 using Content.Server.Atmos.EntitySystems;
-using Content.Server.Construction.Components;
+using Content.Shared.Construction.Components;
 using Content.Server.Gravity;
 using Content.Server.Power.Components;
 using Content.Shared.Atmos;
