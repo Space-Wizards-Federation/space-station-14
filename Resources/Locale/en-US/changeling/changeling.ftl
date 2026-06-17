@@ -30,6 +30,7 @@ changeling-horror-alert-time-name = Remaining time
 changeling-horror-alert-time-desc = When this counter reaches 0, we will have exhausted our strength.
 changeling-horror-force-transform-self = Our energy is depleted, we cannot maintain this form anymore.
 changeling-horror-force-transform-others = { CAPITALIZE(POSS-ADJ($user)) } humongeous flesh rapidly shrivels away and dies.
+changeling-horror-transform-fail = We do not have enough DNA stored to reveal ourselves.
 
 # transformation BUI
 changeling-transform-bui-select-entity = {$entity}

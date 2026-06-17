@@ -6,6 +6,7 @@ using Content.Shared.Cuffs;
 using Content.Shared.Cuffs.Components;
 using Content.Shared.Effects;
 using Content.Shared.FixedPoint;
+using Content.Shared.Flash;
 using Content.Shared.IdentityManagement;
 using Content.Shared.Popups;
 using Content.Shared.Rejuvenate;
@@ -13,6 +14,7 @@ using Content.Shared.Store;
 using Content.Shared.Store.Components;
 using Content.Shared.Stunnable;
 using Robust.Shared.Audio.Systems;
+using Robust.Shared.Containers;
 using Robust.Shared.Serialization;
 using Robust.Shared.Timing;
 
@@ -26,7 +28,6 @@ public abstract partial class SharedChangelingHorrorSystem : EntitySystem
     [Dependency] private SharedChangelingIdentitySystem _identitySystem = default!;
     [Dependency] private SharedAudioSystem _audio = default!;
     [Dependency] private SharedActionsSystem _actions = default!;
-    [Dependency] private ScreechShockWaveSystem _screech = default!;
     [Dependency] private SharedCuffableSystem _cuffable = default!;
     [Dependency] private IGameTiming _timing = default!;
     [Dependency] private SharedStoreSystem _stores = default!;
@@ -34,6 +35,8 @@ public abstract partial class SharedChangelingHorrorSystem : EntitySystem
     [Dependency] private ChangelingTransformSystem _transform = default!;
     [Dependency] private SharedStunSystem _stuns = default!;
     [Dependency] private SharedPopupSystem _popups = default!;
+    [Dependency] private SharedContainerSystem _containers = default!;
+    [Dependency] private SharedFlashSystem _flash = default!; // we have that system for the scream stun, should be swapped out eventually
 
     public override void Initialize()
     {
@@ -192,7 +195,11 @@ public abstract partial class SharedChangelingHorrorSystem : EntitySystem
         _cuffable.Uncuff(ent.Owner, ent.Owner, cuff.Value);
 
         // spawn an evil-ass screech VFX
-        _screech.EntityScreech(ent.Owner, ent.Comp.SpawnScreech);
+        // TODO: handle stunning etc. here
+        var ett = Spawn("EffectScreech");
+        var container = _containers.EnsureContainer<ContainerSlot>(ent.Owner, "screechHolder");
+        _containers.Insert(ett, container);
+        _flash.FlashArea(ent.Owner, ent.Owner, 5f, TimeSpan.FromSeconds(2d));
 
         // play a spawn sound
         _audio.PlayPredicted(ent.Comp.SpawnSound, ent.Owner, null);

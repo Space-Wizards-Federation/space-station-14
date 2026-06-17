@@ -33,6 +33,7 @@ public sealed partial class ChangelingTransformSystem : EntitySystem
     [Dependency] private SharedContainerSystem _container = default!;
     [Dependency] private IdentitySystem _identity = default!;
     [Dependency] private SharedChangelingIdentitySystem _changelingIdentity = default!;
+    [Dependency] private INetManager _netMan = default!;
 
     private const string ChangelingBuiXmlGeneratedName = "ChangelingTransformBoundUserInterface";
     public override void Initialize()
@@ -103,11 +104,19 @@ public sealed partial class ChangelingTransformSystem : EntitySystem
             // if we are trying to transform into horror form, check for DNA
             if (TryComp<StoreComponent>(ent.Owner, out var store))
             {
-                var k = store.Balance["ChangelingDNA"];
-                if (k < FixedPoint2.New(1d)) // you need at least one dna point
-                {
-                    _popup.PopupClient(Loc.GetString("changeling-horror-transform-fail"), ent.Owner, PopupType.Large);
+                // the horror mode transformation will cause some slight desync but that's a problem for later
+                // since stores aren't properly networked
+                if (_netMan.IsClient())
                     return;
+
+                if (store.Balance.ContainsKey("ChangelingDNA"))
+                {
+                    var k = store.Balance["ChangelingDNA"];
+                    if (k < FixedPoint2.New(1d)) // you need at least one dna point
+                    {
+                        _popup.PopupEntity(Loc.GetString("changeling-horror-transform-fail"), ent.Owner, ent.Owner, PopupType.Large);
+                        return;
+                    }
                 }
             }
         }
