@@ -125,7 +125,7 @@ public abstract partial class SharedChangelingHorrorSystem : EntitySystem
         _alerts.ClearAlert(ent.Owner, ent.Comp.TimeAlert);
 
         // Add dna points back
-        if (TryComp<StoreComponent>(ent.Owner, out var store))
+        if (TryComp<StoreComponent>(ent.Owner, out var _))
         {
             // do fancy math to add back DNA based on remaining time
             Dictionary<string, FixedPoint2> dico = new() {

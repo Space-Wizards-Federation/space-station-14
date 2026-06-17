@@ -5,9 +5,11 @@ using Content.Shared.Changeling.Components;
 using Content.Shared.Cloning;
 using Content.Shared.Database;
 using Content.Shared.DoAfter;
+using Content.Shared.FixedPoint;
 using Content.Shared.IdentityManagement;
 using Content.Shared.Popups;
 using Content.Shared.Storage;
+using Content.Shared.Store.Components;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
 using Robust.Shared.Network;
@@ -95,6 +97,20 @@ public sealed partial class ChangelingTransformSystem : EntitySystem
 
         if (!_changelingIdentity.TryGetDataFromIdentity((ent.Owner, identity), targetIdentity.Value, out _))
             return; // this identity does not belong to this player
+
+        if (HasComp<ChangelingHorrorComponent>(targetIdentity))
+        {
+            // if we are trying to transform into horror form, check for DNA
+            if (TryComp<StoreComponent>(ent.Owner, out var store))
+            {
+                var k = store.Balance["ChangelingDNA"];
+                if (k < FixedPoint2.New(1d)) // you need at least one dna point
+                {
+                    _popup.PopupClient(Loc.GetString("changeling-horror-transform-fail"), ent.Owner, PopupType.Large);
+                    return;
+                }
+            }
+        }
 
         TransformInto(ent.AsNullable(), targetIdentity.Value);
     }
