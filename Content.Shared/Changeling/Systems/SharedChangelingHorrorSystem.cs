@@ -1,3 +1,4 @@
+using System.Linq;
 using Content.Shared.Actions;
 using Content.Shared.Alert;
 using Content.Shared.Changeling.Components;
@@ -5,9 +6,12 @@ using Content.Shared.Cuffs;
 using Content.Shared.Cuffs.Components;
 using Content.Shared.Effects;
 using Content.Shared.FixedPoint;
+using Content.Shared.IdentityManagement;
+using Content.Shared.Popups;
 using Content.Shared.Rejuvenate;
 using Content.Shared.Store;
 using Content.Shared.Store.Components;
+using Content.Shared.Stunnable;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Serialization;
 using Robust.Shared.Timing;
@@ -15,7 +19,7 @@ using Robust.Shared.Timing;
 namespace Content.Shared.Changeling.Systems;
 
 /// <summary>
-/// Handles transforming to / from the horror form.
+/// Handles transforming to / from the horror form, including the timed limit & the handing out of actions.
 /// </summary>
 public abstract partial class SharedChangelingHorrorSystem : EntitySystem
 {
@@ -27,6 +31,9 @@ public abstract partial class SharedChangelingHorrorSystem : EntitySystem
     [Dependency] private IGameTiming _timing = default!;
     [Dependency] private SharedStoreSystem _stores = default!;
     [Dependency] private AlertsSystem _alerts = default!;
+    [Dependency] private ChangelingTransformSystem _transform = default!;
+    [Dependency] private SharedStunSystem _stuns = default!;
+    [Dependency] private SharedPopupSystem _popups = default!;
 
     public override void Initialize()
     {
@@ -38,12 +45,48 @@ public abstract partial class SharedChangelingHorrorSystem : EntitySystem
     public override void Update(float frameTime)
     {
         base.Update(frameTime);
-        var enumerator = EntityQueryEnumerator<ChangelingHorrorComponent>();
-        while (enumerator.MoveNext(out var uid, out var comp))
+        var enumerator = EntityQueryEnumerator<ChangelingHorrorComponent, ChangelingIdentityComponent>();
+        while (enumerator.MoveNext(out var uid, out var comp, out var identities))
         {
+            // todo: check for paused maps etc.
+
+            // display the time alert
             _alerts.ShowAlert(uid, comp.TimeAlert);
+
+            // calculate the timeout
+            if (_timing.CurTime - comp.InitialTime > comp.TimeBudget)
+            {
+                // we try to find a non-horror identity
+                var id = identities.ConsumedIdentities.Where(k => !HasComp<ChangelingHorrorComponent>(k.Identity));
+
+                if (!id.Any())
+                    continue;
+
+                var identity = id.First();
+
+                if (!identity.Identity.HasValue)
+                    return;
+
+                // we force the transformation, this will call all cleanup code in OnBeforeTransform
+                var tComp = EnsureComp<ChangelingTransformComponent>(uid);
+                _transform.TransformIntoNow((uid, tComp), identity.Identity.Value);
+
+                var selfMessage = Loc.GetString("changeling-horror-force-transform-self", ("user", Identity.Entity(uid, EntityManager)));
+                var othersMessage = Loc.GetString("changeling-horror-force-transform-others", ("user", Identity.Entity(uid, EntityManager)));
+                _popups.PopupPredicted(
+                selfMessage,
+                othersMessage,
+                uid,
+                uid,
+                PopupType.MediumCaution);
+
+                // we apply a stun penality, you should transform back yourself!
+                _stuns.TryAddStunDuration(uid, TimeSpan.FromSeconds(10));
+            }
         }
     }
+
+    #region transformation
     /// <summary>
     /// This function will only be executed when transforming to changeling horror to a "regular" person.
     /// </summary>
@@ -186,6 +229,7 @@ public abstract partial class SharedChangelingHorrorSystem : EntitySystem
             }
         }
     }
+    #endregion
     #region helpers
     /// <summary>
     /// Converts an amount of DNA currency into horror mode time

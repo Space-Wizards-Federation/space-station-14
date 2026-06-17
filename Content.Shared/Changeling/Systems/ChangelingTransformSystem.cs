@@ -126,6 +126,9 @@ public sealed partial class ChangelingTransformSystem : EntitySystem
     /// This can be any cloneable humanoid and doesn't have to be stored in the ChangelingIdentityComponent,
     /// so make sure to validate the target before.
     /// </summary>
+    /// <remarks>
+    /// Calls <see cref="TransformIntoNow"/> after a doafter.
+    /// </remarks>
     public void TransformInto(Entity<ChangelingTransformComponent?> ent, EntityUid targetIdentity)
     {
         if (!Resolve(ent, ref ent.Comp))
@@ -172,31 +175,21 @@ public sealed partial class ChangelingTransformSystem : EntitySystem
             DistanceThreshold = null,
         });
     }
-
-    private void OnSuccessfulTransform(Entity<ChangelingTransformComponent> ent,
-        ref ChangelingTransformDoAfterEvent args)
+    /// <summary>
+    /// Transforms the changeling into the given identity, but without doafters or popups. Keep in mind they still need a ChangelingTransformComponent
+    /// </summary>
+    public void TransformIntoNow(Entity<ChangelingTransformComponent> ent, EntityUid targetIdentity)
     {
-        args.Handled = true;
-
-        if (args.Cancelled)
-        {
-            // Only stop the sound if we finish transforming successfully.
-            ent.Comp.CurrentTransformSound = _audio.Stop(ent.Comp.CurrentTransformSound);
-            return;
-        }
-        ent.Comp.CurrentTransformSound = null;
-
         if (!_prototype.Resolve(ent.Comp.TransformCloningSettings, out var settings))
             return;
 
-        if (args.Target is not { } targetIdentity)
-            return;
+
 
         var beforeTransformEvent = new BeforeChangelingTransformEvent(targetIdentity);
-        RaiseLocalEvent(args.User, beforeTransformEvent);
+        RaiseLocalEvent(ent.Owner, beforeTransformEvent);
 
-        _visualBody.CopyAppearanceFrom(targetIdentity, args.User);
-        _cloning.CloneComponents(targetIdentity, args.User, settings);
+        _visualBody.CopyAppearanceFrom(targetIdentity, ent.Owner);
+        _cloning.CloneComponents(targetIdentity, ent.Owner, settings);
 
         if (TryComp<ChangelingStoredIdentityComponent>(targetIdentity, out var storedIdentity) && storedIdentity.OriginalSession != null)
             _adminLogger.Add(LogType.Action, LogImpact.High, $"{ToPrettyString(ent.Owner):player} successfully transformed into \"{Name(targetIdentity)}\" ({storedIdentity.OriginalSession:player})");
@@ -215,7 +208,28 @@ public sealed partial class ChangelingTransformSystem : EntitySystem
         }
 
         var afterTransformEvent = new AfterChangelingTransformEvent(targetIdentity);
-        RaiseLocalEvent(args.User, afterTransformEvent);
+        RaiseLocalEvent(ent.Owner, afterTransformEvent);
+    }
+
+    private void OnSuccessfulTransform(Entity<ChangelingTransformComponent> ent,
+        ref ChangelingTransformDoAfterEvent args)
+    {
+        args.Handled = true;
+
+        if (args.Cancelled)
+        {
+            // Only stop the sound if we finish transforming successfully.
+            ent.Comp.CurrentTransformSound = _audio.Stop(ent.Comp.CurrentTransformSound);
+            return;
+        }
+        ent.Comp.CurrentTransformSound = null;
+
+        if (args.Target is not { } targetIdentity)
+            return;
+
+        // Calls the transformation
+        TransformIntoNow(ent, targetIdentity);
+
     }
 
     private void StorageBeforeTransform(Entity<StorageComponent> ent, ref BeforeChangelingTransformEvent args)
