@@ -518,7 +518,7 @@ public abstract partial class SharedWiresSystem : EntitySystem
         if (!Resolve(uid, ref wires))
             return;
 
-        Span<char> data = stackalloc char[9];
+        var data = new char[9];
         data[4] = '-';
 
         if (Random.Prob(0.01f))
@@ -545,7 +545,7 @@ public abstract partial class SharedWiresSystem : EntitySystem
         }
 
         wires.SerialNumber = new string(data);
-        UpdateUserInterface(uid);
+        UpdateUserInterface(uid, wires);
     }
 
     public void TryDoWireAction(EntityUid target, EntityUid user, int id, WiresAction action, WiresComponent? wires = null)
