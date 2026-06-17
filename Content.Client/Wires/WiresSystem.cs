@@ -27,6 +27,7 @@ public sealed class WiresSystem : SharedWiresSystem
 
         foreach (var message in messages)
         {
+            // Ignore pulses because they don't affect UI state.
             if (message is not WiresActionMessage { Action: not WiresAction.Pulse } action)
                 continue;
 
