@@ -94,6 +94,7 @@
     - id: AmmoniaCanister
     - id: CarbonDioxideCanister
     - id: FrezonCanister
+    - id: ElectrovaeCanister
     - id: NitrogenCanister
     - id: NitrousOxideCanister
     - id: OxygenCanister
