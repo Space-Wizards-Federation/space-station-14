@@ -31,18 +31,41 @@ public sealed partial class AFKSystem : EntitySystem
         base.Initialize();
         _playerManager.PlayerStatusChanged += OnPlayerChange;
         Subs.CVar(_configManager, CCVars.AfkTime, SetAfkDelay, true);
+        _afkManager.PlayerDidActionEvent += OnPlayerAction;
 
         SubscribeNetworkEvent<FullInputCmdMessage>(HandleInputCmd);
+        SubscribeLocalEvent<BoundUserInterfaceMessageReceivedEvent>(OnBoundUiMessageReceived);
     }
 
     private void HandleInputCmd(FullInputCmdMessage msg, EntitySessionEventArgs args)
     {
+        if (_checkDelay <= 0)
+            return;
+
+        if (!_playerManager.KeyMap.TryGetKeyFunction(msg.InputFunctionId, out _))
+            return;
+
+        if (!Enum.IsDefined(msg.State))
+            return;
+
         _afkManager.PlayerDidAction(args.SenderSession);
+    }
+
+    private void OnBoundUiMessageReceived(ref BoundUserInterfaceMessageReceivedEvent args)
+    {
+        if (_checkDelay <= 0)
+            return;
+
+        if (!TryComp<ActorComponent>(args.Actor, out var actor))
+            return;
+
+        _afkManager.PlayerDidAction(actor.PlayerSession);
     }
 
     private void SetAfkDelay(float obj)
     {
         _checkDelay = obj;
+        _checkTime = _timing.CurTime;
     }
 
     private void OnPlayerChange(object? sender, SessionStatusEventArgs e)
@@ -60,28 +83,42 @@ public sealed partial class AFKSystem : EntitySystem
         base.Shutdown();
         _afkPlayers.Clear();
         _playerManager.PlayerStatusChanged -= OnPlayerChange;
+        _afkManager.PlayerDidActionEvent -= OnPlayerAction;
+    }
+
+    private void OnPlayerAction(ICommonSession session)
+    {
+        if (_checkDelay <= 0)
+            return;
+
+        if (!_afkPlayers.Remove(session))
+            return;
+
+        var ev = new UnAFKEvent(session);
+        RaiseLocalEvent(ref ev);
     }
 
     public override void Update(float frameTime)
     {
         base.Update(frameTime);
 
-        if (_ticker.RunLevel != GameRunLevel.InRound)
+        if (_ticker.RunLevel is not (GameRunLevel.InRound or GameRunLevel.PreRoundLobby) || _checkDelay <= 0f)
         {
             _afkPlayers.Clear();
             _checkTime = TimeSpan.Zero;
             return;
         }
 
-        // TODO: Should also listen to the input events for more accurate timings.
         if (_timing.CurTime < _checkTime)
             return;
 
         _checkTime = _timing.CurTime + TimeSpan.FromSeconds(_checkDelay);
 
-        foreach (var pSession in Filter.GetAllPlayers())
+        foreach (var pSession in _playerManager.Sessions)
         {
-            if (pSession.Status != SessionStatus.InGame) continue;
+            if (!CanCheckSession(pSession))
+                continue;
+
             var isAfk = _afkManager.IsAfk(pSession);
 
             if (isAfk && _afkPlayers.Add(pSession))
@@ -97,5 +134,15 @@ public sealed partial class AFKSystem : EntitySystem
                 RaiseLocalEvent(ref ev);
             }
         }
+    }
+
+    private bool CanCheckSession(ICommonSession session)
+    {
+        return _ticker.RunLevel switch
+        {
+            GameRunLevel.InRound => session.Status is SessionStatus.Connected or SessionStatus.InGame,
+            GameRunLevel.PreRoundLobby => session.Status is SessionStatus.Connected or SessionStatus.InGame,
+            _ => false,
+        };
     }
 }

@@ -22,6 +22,25 @@ namespace Content.Client.Administration.UI.Tabs
             _config.OnValueChanged(CCVars.LoocEnabled, LoocEnabledChanged, true);
 
             ServerShutdownButton.OnPressed += _ => _console.ExecuteCommand("shutdown");
+
+            AfkTime.OnTextEntered += args => SendFloatCVar(CCVars.AfkTime.Name, args.Text);
+            AfkTime.OnFocusExit += args => SendFloatCVar(CCVars.AfkTime.Name, args.Text);
+            AdminAfkTime.OnTextEntered += args => SendFloatCVar(CCVars.AdminAfkTime.Name, args.Text);
+            AdminAfkTime.OnFocusExit += args => SendFloatCVar(CCVars.AdminAfkTime.Name, args.Text);
+            AfkConfirmTimeout.OnTextEntered += args => SendFloatCVar(CCVars.AfkConfirmTimeout.Name, args.Text);
+            AfkConfirmTimeout.OnFocusExit += args => SendFloatCVar(CCVars.AfkConfirmTimeout.Name, args.Text);
+        }
+
+        private void SendFloatCVar(string cvar, string text)
+        {
+            if (string.IsNullOrWhiteSpace(text) ||
+                !float.TryParse(text, out var value) ||
+                value < 0f)
+            {
+                return;
+            }
+
+            _console.ExecuteCommand($"changecvar {cvar} {value}");
         }
 
         private void OocEnabledChanged(bool value)
