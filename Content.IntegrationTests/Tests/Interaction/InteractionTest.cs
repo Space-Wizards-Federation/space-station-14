@@ -172,6 +172,10 @@ public abstract partial class InteractionTest : GameTest
     };
     protected virtual PoolSettings Settings => Default;
 
+    /// <summary>
+    /// This is here for backward-compatibility.
+    /// You probably should switch to <see cref="DoSetup"/>.
+    /// </summary>
     public virtual async Task Setup()
     {
         //
