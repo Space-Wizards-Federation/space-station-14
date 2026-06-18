@@ -13,7 +13,7 @@ namespace Content.IntegrationTests.Tests.Administration.Logs;
 
 public sealed class LogWindowTest : InteractionTest
 {
-    protected override PoolSettings Settings => new() { Connected = true, Dirty = true, AdminLogsEnabled = true, DummyTicker = false };
+    public override PoolSettings PoolSettings => new() { Connected = true, Dirty = true, AdminLogsEnabled = true, DummyTicker = false };
 
     [Test]
     public async Task TestAdminLogsWindow()
@@ -22,8 +22,6 @@ public sealed class LogWindowTest : InteractionTest
         var log = Server.Resolve<IAdminLogManager>();
         var guid = Guid.NewGuid();
         await Server.WaitPost(() => log.Add(LogType.Unknown, $"{SPlayer} test log 1: {guid}"));
-        // Wait for DB stuff to finish
-        await RunTicksSync(5);
 
         // Click the admin button in the menu bar
         await ClickWidgetControl<GameTopMenuBar, MenuButton>(nameof(GameTopMenuBar.AdminButton));

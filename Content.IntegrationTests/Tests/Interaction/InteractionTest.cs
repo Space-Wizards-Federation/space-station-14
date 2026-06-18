@@ -170,7 +170,8 @@ public abstract partial class InteractionTest : GameTest
         Connected = true,
         Dirty = true
     };
-    protected virtual PoolSettings Settings => Default;
+
+    public override PoolSettings PoolSettings => Default;
 
     /// <summary>
     /// This is here for backward-compatibility.
