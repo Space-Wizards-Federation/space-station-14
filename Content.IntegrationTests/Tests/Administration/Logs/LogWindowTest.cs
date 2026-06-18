@@ -22,6 +22,8 @@ public sealed class LogWindowTest : InteractionTest
         var log = Server.Resolve<IAdminLogManager>();
         var guid = Guid.NewGuid();
         await Server.WaitPost(() => log.Add(LogType.Unknown, $"{SPlayer} test log 1: {guid}"));
+        // Wait for DB stuff to finish
+        await RunTicksSync(5);
 
         // Click the admin button in the menu bar
         await ClickWidgetControl<GameTopMenuBar, MenuButton>(nameof(GameTopMenuBar.AdminButton));
