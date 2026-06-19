@@ -23,7 +23,13 @@ namespace Content.Server.Atmos.EntitySystems
         public override void InitializeGases()
         {
             base.InitializeGases();
+        }
 
+        /// <summary>
+        ///     Caches all gas reactions into an array ordered by priority.
+        /// </summary>
+        public void CacheGases()
+        {
             _gasReactions = ProtoManager.EnumeratePrototypes<GasReactionPrototype>().ToArray();
             Array.Sort(_gasReactions, (a, b) => b.Priority.CompareTo(a.Priority));
         }
