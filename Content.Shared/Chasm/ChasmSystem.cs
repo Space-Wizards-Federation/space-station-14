@@ -1,5 +1,4 @@
 ﻿using System.Linq;
-using Content.Shared._Moffstation.Extensions;
 using Content.Shared.ActionBlocker;
 using Content.Shared.Movement.Events;
 using Content.Shared.StepTrigger.Systems;
@@ -142,11 +141,13 @@ public sealed partial class ChasmSystem : EntitySystem
 
     private void OnShutdown(Entity<ChasmComponent> entity, ref ComponentShutdown args)
     {
-        foreach (var falling in EntityQueryEnumerator<ChasmFallingComponent>()
-                     .AsEnumerable()
-                     .Where(falling => falling.Comp.FallingInto == entity.Owner))
+        var e = EntityQueryEnumerator<ChasmFallingComponent>();
+        while (e.MoveNext(out var fallingEnt, out var falling))
         {
-            RemCompDeferred<ChasmFallingComponent>(falling);
+            if (falling.FallingInto != entity.Owner)
+                continue;
+
+            RemCompDeferred<ChasmFallingComponent>(fallingEnt);
         }
     }
 }
