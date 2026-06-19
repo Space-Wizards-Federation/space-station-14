@@ -146,13 +146,14 @@ public sealed partial class FileMidiSource : InstrumentMidiSourceBase
     {
         var currentItem = obj.ItemList[obj.ItemIndex];
 
-        if (!IsPlaying || string.IsNullOrEmpty(currentItem.Text))
-        {
-            IsPlaying = false;
+        if (string.IsNullOrEmpty(currentItem.Text))
             return;
-        }
 
         CurrentTrackLabel.Text = currentItem.Text;
+
+        if (!IsPlaying)
+            return;
+
         StartPlaying(currentItem.Text);
     }
 
