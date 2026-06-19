@@ -18,12 +18,39 @@ public sealed partial class FileMidiSource : InstrumentMidiSourceBase
     [Dependency] private IEntityManager _entManager = default!;
     [Dependency] private IRobustRandom _random = default!;
 
+    /// <summary>
+    /// Raised when the MIDI track with the given name should be played.
+    /// </summary>
     public event Action<string>? StartPlayingRequest;
+
+    /// <summary>
+    /// Raised when any currently playing MIDI track should be stopped.
+    /// </summary>
     public event Action? StopPlayingRequest;
+
+    /// <summary>
+    /// Raised when the track position on the currently playing MIDI track should change.
+    /// </summary>
     public event Action<int>? TrackPositionChangeRequest;
+
+    /// <summary>
+    /// Raised when the user would like to rename the MIDI file with the given name.
+    /// </summary>
     public event Action<string>? FileRenameRequest;
+
+    /// <summary>
+    /// Raised when the user would like to remove the MIDI file with the given name.
+    /// </summary>
     public event Action<string>? FileRemoveRequest;
+
+    /// <summary>
+    /// Raised when the user would like to add a new MIDI file.
+    /// </summary>
     public event Action? FileAddNewRequest;
+
+    /// <summary>
+    /// Raised when looping MIDI tracks is toggled.
+    /// </summary>
     public event Action<bool>? LoopingToggled;
 
     private readonly string _noTrackSelectedText = Loc.GetString("instruments-component-menu-files-no-track-selected");
@@ -34,6 +61,9 @@ public sealed partial class FileMidiSource : InstrumentMidiSourceBase
     private string CurrentFilter => FilterBar.Text;
     public override string ButtonName => Loc.GetString("instruments-component-menu-file-midi-source-button");
 
+    /// <summary>
+    /// Controls of MIDI tracks should currently be played. This is connected to the play button.
+    /// </summary>
     public bool IsPlaying
     {
         get => PlayButton.Pressed;
@@ -230,11 +260,20 @@ public sealed partial class FileMidiSource : InstrumentMidiSourceBase
         return TrackList.GetSelected().TryFirstOrDefault(out item);
     }
 
+    /// <summary>
+    /// Set the instrument entity actually playing the tracks. This is needed for the UI to read out current track time
+    /// on <see cref="FrameUpdate"/>.
+    /// </summary>
+    /// <param name="ent">The instrument entity playing the tracks.</param>
     public void SetEntity(EntityUid ent)
     {
         _entity = ent;
     }
 
+    /// <summary>
+    /// Replaces the current MIDI tracks in the list with the passed ones.
+    /// </summary>
+    /// <param name="tracks">The tracks to add.</param>
     public void PopulateTrackList(IEnumerable<string> tracks)
     {
         _loadedTracks.Clear();
@@ -242,26 +281,43 @@ public sealed partial class FileMidiSource : InstrumentMidiSourceBase
         FilterTrackList();
     }
 
+    /// <summary>
+    /// Adds the passed MIDI track to the list.
+    /// </summary>
+    /// <param name="name">Name of the MIDI track to add.</param>
     public void AddTrack(string name)
     {
         _loadedTracks.Add(name);
         FilterTrackList();
     }
 
+    /// <summary>
+    /// Removes the passed MIDI track from the list.
+    /// </summary>
+    /// <param name="name">Name of the MIDI track to remove.</param>
     public void RemoveTrack(string name)
     {
         _loadedTracks.Remove(name);
         FilterTrackList();
     }
 
-    public void UpdateTrackName(string originalName, string newName)
+    /// <summary>
+    /// Updates the name of a MIDI track inside the list.
+    /// </summary>
+    /// <param name="currentName">Current name of the MIDI track.</param>
+    /// <param name="newName">New name for the MIDI track.</param>
+    public void UpdateTrackName(string currentName, string newName)
     {
-        if (_loadedTracks.Remove(originalName))
+        if (_loadedTracks.Remove(currentName))
             _loadedTracks.Add(newName);
         FilterTrackList();
     }
 
-    public void PlayNextTrack()
+    /// <summary>
+    /// Selects the next MIDI track from the list according to shuffle and filter settings.
+    /// </summary>
+    /// <remarks>Selecting another track causes its playback if <see cref="IsPlaying"/> is true.</remarks>
+    public void SelectNextTrack()
     {
         // Only proceed if panel is visible.
         if (!Visible)
