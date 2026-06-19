@@ -5,6 +5,8 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Content.IntegrationTests;
+using Content.IntegrationTests.Pair;
+using DiffPlex.Renderer;
 using Content.IntegrationTests.Utility;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Reflection;
@@ -20,40 +22,62 @@ namespace Content.YAMLLinter
     {
         private static readonly ExternalTestContext TestContext = new("YAML Linter", StreamWriter.Null);
 
-        private static async Task<int> Main(string[] _)
+        private static async Task<int> Main(string[] args)
         {
+            if (!CommandLineArguments.TryParse(args, out var arguments))
+                return -1;
+
             GameDataScrounger.NoScrounging = true; // Ugly hack for YAML Linter.
             PoolManager.Startup();
             var stopwatch = new Stopwatch();
             stopwatch.Start();
+            await using var pair = await PoolManager.GetServerClient();
 
-            var (errors, fieldErrors) = await RunValidation();
-
-            var count = errors.Count + fieldErrors.Count;
-
-            if (count == 0)
+            if (arguments.Save)
             {
-                Console.WriteLine($"No errors found in {(int) stopwatch.Elapsed.TotalMilliseconds} ms.");
-                PoolManager.Shutdown();
-                return 0;
+                if (!RunSave(arguments, pair))
+                    return -1;
+                await pair.CleanReturnAsync();
+                Console.WriteLine($"Saved in {(int)stopwatch.Elapsed.TotalMilliseconds} ms.");
+            }
+            else if (arguments.Diff)
+            {
+                if (!RunDiff(arguments, pair))
+                    return -1;
+                await pair.CleanReturnAsync();
+                Console.WriteLine($"Saved in {(int)stopwatch.Elapsed.TotalMilliseconds} ms.");
             }
 
-            foreach (var (file, errorHashset) in errors)
+            else
             {
-                foreach (var errorNode in errorHashset)
+                var (errors, fieldErrors) = await RunValidation();
+
+                var count = errors.Count + fieldErrors.Count;
+
+                if (count == 0)
                 {
-                    // TODO YAML LINTER Fix inheritance
-                    // If a parent/abstract prototype has na error, this will misreport the file name (but with the correct line/column).
-                    Console.WriteLine($"::error in {file}({errorNode.Node.Start.Line},{errorNode.Node.Start.Column})  {errorNode.ErrorReason}");
+                    Console.WriteLine($"No errors found in {(int)stopwatch.Elapsed.TotalMilliseconds} ms.");
+                    PoolManager.Shutdown();
+                    return 0;
                 }
-            }
 
-            foreach (var error in fieldErrors)
-            {
-                Console.WriteLine(error);
-            }
+                foreach (var (file, errorHashset) in errors)
+                {
+                    foreach (var errorNode in errorHashset)
+                    {
+                        // TODO YAML LINTER Fix inheritance
+                        // If a parent/abstract prototype has na error, this will misreport the file name (but with the correct line/column).
+                        Console.WriteLine($"::error in {file}({errorNode.Node.Start.Line},{errorNode.Node.Start.Column})  {errorNode.ErrorReason}");
+                    }
+                }
 
-            Console.WriteLine($"{count} errors found in {(int) stopwatch.Elapsed.TotalMilliseconds} ms.");
+                foreach (var error in fieldErrors)
+                {
+                    Console.WriteLine(error);
+                }
+
+                Console.WriteLine($"{count} errors found in {(int)stopwatch.Elapsed.TotalMilliseconds} ms.");
+            }
             PoolManager.Shutdown();
             return -1;
         }
@@ -178,6 +202,60 @@ namespace Content.YAMLLinter
                 .ToList();
 
             return (yamlErrors, fieldErrors);
+        }
+
+        private static bool RunSave(CommandLineArguments arguments, TestPair pair)
+        {
+            try
+            {
+                Console.WriteLine($"Saving prototypes in path {new ResPath(arguments.SavePath).CanonPath}...");
+            }
+            catch (NullReferenceException)
+            {
+                Console.WriteLine($"Unknown file path provided for argument -path.");
+                return false;
+            }
+            var server = pair.Server;
+            var protoMan = server.ResolveDependency<IPrototypeManager>();
+            protoMan.SaveEntityPrototypes(new(arguments.SavePath), out _, arguments.SaveIncludeAbstract, true);
+            return true;
+        }
+
+        private static bool RunDiff(CommandLineArguments arguments, TestPair pair)
+        {
+            try
+            {
+                Console.WriteLine($"Creating a new diff from {new ResPath(arguments.DiffPathBefore).CanonPath}.");
+            }
+            catch (NullReferenceException)
+            {
+                Console.WriteLine($"Unknown file path provided for argument -before.");
+                return false;
+            }
+            try
+            {
+                Console.WriteLine($"Saving prototypes in path {new ResPath(arguments.SavePath).CanonPath}...");
+            }
+            catch (NullReferenceException)
+            {
+                Console.WriteLine($"Unknown file path provided for argument -path.");
+                return false;
+            }
+
+            var server = pair.Server;
+            var protoMan = server.ResolveDependency<IPrototypeManager>();
+            protoMan.SaveEntityPrototypes(new(arguments.SavePath), out var after, true, false);
+
+            var before = File.ReadAllText(new ResPath(arguments.DiffPathBefore).ToRelativeSystemPath());
+            var diff = UnidiffRenderer.GenerateUnidiff(before, after);
+
+            // TODO: probably dont want to use streamwriter here.
+            // instead we should return our output so this can be used in other apps.
+            // maybe make this a bool?
+            using var writer = new StreamWriter("prototype-diff.yml", false);
+            writer.WriteLine(diff);
+
+            return true;
         }
 
         private static async Task<(Assembly[] clientAssemblies, Assembly[] serverAssemblies)>
