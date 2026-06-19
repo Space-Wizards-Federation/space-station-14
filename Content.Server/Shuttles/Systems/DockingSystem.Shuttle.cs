@@ -325,7 +325,7 @@ public sealed partial class DockingSystem
         foreach (var fix in shuttleFixturesComp.Fixtures.Values)
         {
             var polyShape = (PolygonShape)fix.Shape;
-            var aabb = polyShape.ComputeAABB(transform, 0);
+            var aabb = _physics.ComputeAABB(polyShape, transform, 0);
             aabb = aabb.Enlarged(-0.01f);
 
             // If it's a map check no hard collidable anchored entities overlap

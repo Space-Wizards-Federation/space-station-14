@@ -957,7 +957,7 @@ public sealed partial class ShuttleSystem
             if (!fixture.Hard)
                 continue;
 
-            var aabb = fixture.Shape.ComputeAABB(transform, 0);
+            var aabb = _physics.ComputeAABB(fixture.Shape, transform, 0);
 
             // Shift it slightly
             // Create a small border around it.

@@ -5,6 +5,7 @@ using Content.Shared.Physics;
 using Robust.Shared.Map;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Physics;
+using Robust.Shared.Physics.Systems;
 using Robust.Shared.Toolshed.Commands.Values;
 
 namespace Content.Shared.Maps;
@@ -18,6 +19,7 @@ public sealed partial class TurfSystem : EntitySystem
     [Dependency] private EntityLookupSystem _entityLookup = default!;
     [Dependency] private SharedTransformSystem _transform = default!;
     [Dependency] private SharedMapSystem _mapSystem = default!;
+    [Dependency] private SharedPhysicsSystem _physics = default!;
     [Dependency] private ITileDefinitionManager _tileDefinitions = default!;
 
     [Dependency] private EntityQuery<FixturesComponent> _fixtureQuery = default!;
@@ -110,9 +112,9 @@ public sealed partial class TurfSystem : EntitySystem
                 if ((fixture.CollisionLayer & (int)mask) == 0)
                     continue;
 
-                for (var i = 0; i < fixture.Shape.ChildCount; i++)
+                for (var i = 0; i < _physics.GetChildCount(fixture.Shape); i++)
                 {
-                    var intersection = fixture.Shape.ComputeAABB(xform, i).Intersect(tileAabb);
+                    var intersection = _physics.ComputeAABB(fixture.Shape, xform, i).Intersect(tileAabb);
                     intersectionArea += intersection.Width * intersection.Height;
                     if (intersectionArea > minIntersectionArea)
                         return true;

@@ -485,7 +485,7 @@ public sealed partial class PathfindingSystem
                                 // Do an AABB check first as it's probably faster, then do an actual point check.
                                 var intersects = false;
 
-                                foreach (var proxy in fixture.Proxies)
+                                foreach (var proxy in fixture.GetProxies())
                                 {
                                     if (!proxy.AABB.Contains(localPos))
                                         continue;

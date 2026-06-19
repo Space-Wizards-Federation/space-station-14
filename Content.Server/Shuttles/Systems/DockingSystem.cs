@@ -26,6 +26,7 @@ namespace Content.Server.Shuttles.Systems
         [Dependency] private ShuttleConsoleSystem _console = default!;
         [Dependency] private SharedJointSystem _jointSystem = default!;
         [Dependency] private SharedPopupSystem _popup = default!;
+        [Dependency] private SharedPhysicsSystem _physics = default!;
         [Dependency] private SharedTransformSystem _transform = default!;
 
         [Dependency] private EntityQuery<MapGridComponent> _gridQuery = default!;

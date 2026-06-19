@@ -140,9 +140,9 @@ public sealed partial class BiomeSystem : SharedBiomeSystem
 
                 foreach (var fixture in fixtures.Fixtures.Values)
                 {
-                    for (var i = 0; i < fixture.Shape.ChildCount; i++)
+                    for (var i = 0; i < _physics.GetChildCount(fixture.Shape); i++)
                     {
-                        var aabb = fixture.Shape.ComputeAABB(pTransform, i);
+                        var aabb = _physics.ComputeAABB(fixture.Shape, pTransform, i);
 
                         setTiles.Clear();
                         ReserveTiles(uid, aabb, setTiles);

@@ -19,6 +19,7 @@ using Robust.Shared.Network;
 using Robust.Shared.Physics;
 using Robust.Shared.Physics.Collision.Shapes;
 using Robust.Shared.Physics.Dynamics;
+using Robust.Shared.Physics.Systems;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 using System.Linq;
@@ -42,6 +43,7 @@ public sealed partial class RCDSystem : EntitySystem
     [Dependency] private EntityLookupSystem _lookup = default!;
     [Dependency] private IPrototypeManager _protoManager = default!;
     [Dependency] private SharedMapSystem _mapSystem = default!;
+    [Dependency] private SharedPhysicsSystem _physics = default!;
     [Dependency] private SharedTransformSystem _transform = default!;
     [Dependency] private TagSystem _tags = default!;
 
@@ -642,7 +644,7 @@ public sealed partial class RCDSystem : EntitySystem
         var entXformComp = Transform(fixtureOwner);
         var entXform = new Transform(new(), entXformComp.LocalRotation);
 
-        return boundingPolygon.ComputeAABB(boundingTransform, 0).Intersects(fixture.Shape.ComputeAABB(entXform, 0));
+        return _physics.ComputeAABB(boundingPolygon, boundingTransform, 0).Intersects(_physics.ComputeAABB(fixture.Shape, entXform, 0));
     }
 
     #endregion
