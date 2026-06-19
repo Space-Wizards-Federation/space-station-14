@@ -327,8 +327,8 @@ public sealed partial class FileMidiSource : InstrumentMidiSourceBase
         if (!IsPlaying)
             return;
 
-        // Empty list, nothing to play.
-        if (!TryGetSelectedTrack(out var item))
+        // List is empty, return
+        if (TrackList.Count == 0)
             return;
 
         if (IsShuffle)
@@ -337,6 +337,12 @@ public sealed partial class FileMidiSource : InstrumentMidiSourceBase
         }
         else
         {
+            if (!TryGetSelectedTrack(out var item))
+            {
+                TrackList[0].Selected = true;
+                return;
+            }
+
             for (var i = 0; i < TrackList.Count - 1; i++)
             {
                 if (TrackList[i] != item)
@@ -344,7 +350,6 @@ public sealed partial class FileMidiSource : InstrumentMidiSourceBase
                 TrackList[i + 1].Selected = true;
                 return;
             }
-            TrackList[0].Selected = true;
         }
     }
 }
