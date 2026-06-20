@@ -1,4 +1,5 @@
 using Content.Shared.Examine;
+using Robust.Client.GameObjects;
 using Robust.Shared.Map;
 using Robust.Shared.Spawners;
 
@@ -10,6 +11,8 @@ namespace Content.Client.DirectionalArrowIndicator;
 /// </summary>
 public sealed class DirectionalArrowIndicatorSystem : EntitySystem
 {
+    [Dependency] private TransformSystem _transform = default!;
+
     private const float EdgeOffset = 0.78125f; // Used for moving arrow to the edge of the tile by default.
 
     public override void Initialize()
@@ -30,7 +33,7 @@ public sealed class DirectionalArrowIndicatorSystem : EntitySystem
         {
             var spawnedEnt = Spawn(arrowData.ArrowType, new EntityCoordinates(ent, arrowData.Offset.X, arrowData.Offset.Y + EdgeOffset));
 
-            Transform(spawnedEnt).LocalRotation = arrowData.Rotation;
+            _transform.SetLocalRotation(spawnedEnt, arrowData.Rotation);
 
             EnsureComp<TimedDespawnComponent>(spawnedEnt, out var timedDespawn);
             timedDespawn.Lifetime = lifetime;
