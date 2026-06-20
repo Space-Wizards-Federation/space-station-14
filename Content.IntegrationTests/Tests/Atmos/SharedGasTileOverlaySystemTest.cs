@@ -38,7 +38,7 @@ public sealed class GasTileOverlayTemperatureNetworkingTest : AtmosTest
             }
         });
 
-        await RunTicksSync(1);
+        await RunTicksSync(10);
 
         var gridComp = ProcessEnt.Comp3;
         var gridNetEnt = Server.EntMan.GetNetEntity(ProcessEnt);

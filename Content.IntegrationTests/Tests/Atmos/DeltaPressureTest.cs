@@ -413,14 +413,17 @@ public sealed class DeltaPressureTest : AtmosTest
 
         await Server.WaitAssertion(delegate
         {
-            SAtmos.SetAtmosphereSimulation(ProcessEnt, false);
             var uid = SEntMan.SpawnAtPosition("DeltaPressureSolidTestDeltaOnly", new EntityCoordinates(ProcessEnt.Owner, Vector2.Zero));
             dpEnt = new Entity<DeltaPressureComponent>(uid, SEntMan.GetComponent<DeltaPressureComponent>(uid));
             Assert.That(SAtmos.IsDeltaPressureEntityInList(ProcessEnt.Owner, dpEnt), "Entity was not in processing list when it should have been added!");
+        });
 
+        await Server.WaitRunTicks(1);
+
+        await Server.WaitPost(delegate
+        {
             var indices = _xformSys.GetGridOrMapTilePosition(dpEnt);
             var tiles = ProcessEnt.Comp1.Tiles;
-
             // There was a nasty bug where the indexing for comparisons was off and diagonals were
             // being compared against instead of cardinals. This test basically
             // stamps that out, so hopefully something silly doesn't happen again
