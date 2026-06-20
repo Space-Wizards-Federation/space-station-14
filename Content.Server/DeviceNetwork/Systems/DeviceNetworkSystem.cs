@@ -1,9 +1,7 @@
 using Content.Shared.DeviceNetwork;
 using JetBrains.Annotations;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Random;
 using System.Buffers;
-using System.Diagnostics.CodeAnalysis;
 using Content.Server.GameTicking.Events;
 using Content.Shared.DeviceNetwork.Components;
 using Content.Shared.DeviceNetwork.Events;
@@ -20,9 +18,7 @@ namespace Content.Server.DeviceNetwork.Systems;
 [UsedImplicitly]
 public sealed partial class DeviceNetworkSystem : SharedDeviceNetworkSystem
 {
-    [Dependency] private IRobustRandom _random = default!;
-    [Dependency] private IPrototypeManager _protoMan = default!;
-    [Dependency] private SharedTransformSystem _transformSystem = default!;
+
     [Dependency] private DeviceListSystem _deviceLists = default!;
     [Dependency] private NetworkConfiguratorSystem _configurator = default!;
     [Dependency] private PvsOverrideSystem _pvsOverride = default!;
@@ -33,35 +29,7 @@ public sealed partial class DeviceNetworkSystem : SharedDeviceNetworkSystem
         SubscribeLocalEvent<RoundStartingEvent>(OnRoundStart);
         SubscribeLocalEvent<RoundRestartCleanupEvent>(OnCleanup);
         SubscribeLocalEvent<DeviceNetworkManagerComponent, MapInitEvent>(OnManagerInit);
-        SubscribeLocalEvent<DeviceNetworkComponent, MapInitEvent>(OnMapInit);
         SubscribeLocalEvent<DeviceNetworkComponent, ComponentShutdown>(OnNetworkShutdown);
-    }
-
-    public override void Update(float frameTime)
-    {
-        if (!TryGetManager(out var manager))
-            return;
-
-        var comp = manager.Value.Comp;
-        while (comp.ActiveQueue.TryDequeue(out var packet))
-        {
-            SendPacket(ref packet);
-        }
-
-        SwapQueues(comp);
-    }
-
-    /// <summary>
-    /// Swaps the active queue.
-    /// Queues are swapped so that packets being sent in the current tick get processed in the next tick.
-    /// </summary>
-    /// <remarks>
-    /// This prevents infinite loops while sending packets
-    /// </remarks>
-    private void SwapQueues(DeviceNetworkManagerComponent manager)
-    {
-        manager.NextQueue = manager.ActiveQueue;
-        manager.ActiveQueue = manager.ActiveQueue == manager.QueueA ? manager.QueueB : manager.QueueA;
     }
 
     private void OnRoundStart(RoundStartingEvent ev)
@@ -76,32 +44,7 @@ public sealed partial class DeviceNetworkSystem : SharedDeviceNetworkSystem
 
     private void OnManagerInit(Entity<DeviceNetworkManagerComponent> ent, ref MapInitEvent args)
     {
-        ent.Comp.ActiveQueue = ent.Comp.QueueA;
-        ent.Comp.NextQueue = ent.Comp.QueueB;
         _pvsOverride.AddGlobalOverride(ent);
-    }
-
-    private Entity<DeviceNetworkManagerComponent> EnsureManager()
-    {
-        if (TryGetManager(out var found))
-            return found.Value;
-
-        var manager = Spawn();
-        var managerComp = AddComp<DeviceNetworkManagerComponent>(manager);
-        return (manager, managerComp);
-    }
-
-    private bool TryGetManager([NotNullWhen(true)] out Entity<DeviceNetworkManagerComponent>? ent)
-    {
-        ent = null;
-        var query = EntityQueryEnumerator<DeviceNetworkManagerComponent>();
-        while (query.MoveNext(out var uid, out var comp))
-        {
-            ent = (uid, comp);
-            return true;
-        }
-
-        return false;
     }
 
     private void ClearManager()
@@ -125,33 +68,6 @@ public sealed partial class DeviceNetworkSystem : SharedDeviceNetworkSystem
         }
 
         Del(found);
-    }
-
-    /// <summary>
-    /// Automatically attempt to connect some devices when a map starts.
-    /// </summary>
-    private void OnMapInit(Entity<DeviceNetworkComponent> ent, ref MapInitEvent args)
-    {
-        var device = ent.Comp;
-        if (device.ReceiveFrequency == null
-            && device.ReceiveFrequencyId != null
-            && _protoMan.TryIndex(device.ReceiveFrequencyId, out var receive))
-        {
-            device.ReceiveFrequency = receive.Frequency;
-        }
-
-        if (device.TransmitFrequency == null
-            && device.TransmitFrequencyId != null
-            && _protoMan.TryIndex(device.TransmitFrequencyId, out var xmit))
-        {
-            device.TransmitFrequency = xmit.Frequency;
-        }
-
-        // Needed for example for tests, so when there's a device, there's also always a manager that can handle it.
-        EnsureManager();
-
-        if (device.AutoConnect)
-            ConnectDevice(ent.AsNullable());
     }
 
     /// <summary>
@@ -182,61 +98,7 @@ public sealed partial class DeviceNetworkSystem : SharedDeviceNetworkSystem
         CheckClearManager();
     }
 
-    /// <summary>
-    ///     Try to find a device on a network using its address.
-    /// </summary>
-    private bool TryGetDevice(int netId, string address, [NotNullWhen(true)] out Device? device)
-    {
-        device = null;
-        if (!TryGetNetwork(netId, out var network)
-            || !network.Devices.TryGetValue(address, out var foundDevice))
-            return false;
-
-        device = foundDevice;
-        return true;
-    }
-
-    /// <summary>
-    /// Tries to get an already existing device network, and creates a new network if it doesn't exist.
-    /// </summary>
-    /// <returns>False if the manager is not initialized.</returns>
-    /// <returns></returns>
-    private bool TryEnsureNetwork(int netId, [NotNullWhen(true)] out DeviceNet? network)
-    {
-        network = null;
-        if (!TryGetManager(out var manager))
-            return false;
-
-        if (manager.Value.Comp.Networks.TryGetValue(netId, out var deviceNet))
-        {
-            network = deviceNet;
-            return true;
-        }
-
-        var newDeviceNet = new DeviceNet(netId, _random);
-        manager.Value.Comp.Networks[netId] = newDeviceNet;
-        network = newDeviceNet;
-        return true;
-    }
-
-    /// <summary>
-    /// Tries to get an already existing network.
-    /// </summary>
-    /// <returns>False if the manager is not initialized, or the network wasn't found.</returns>
-    private bool TryGetNetwork(int netId, [NotNullWhen(true)] out DeviceNet? network)
-    {
-        network = null;
-        if (!TryGetManager(out var manager))
-            return false;
-
-        if (!manager.Value.Comp.Networks.TryGetValue(netId, out var deviceNet))
-            return false;
-
-        network = deviceNet;
-        return true;
-    }
-
-    private void SendPacket(ref DeviceNetworkPacketEvent packet)
+    protected override void SendPacket(ref DeviceNetworkPacketEvent packet)
     {
         if (!TryEnsureNetwork(packet.NetId, out var network))
             return;
@@ -281,57 +143,6 @@ public sealed partial class DeviceNetworkSystem : SharedDeviceNetworkSystem
             }
             SendToConnections(deviceCopy.AsSpan(0, totalDevices), packet);
             ArrayPool<Device>.Shared.Return(deviceCopy);
-        }
-    }
-
-    /// <summary>
-    /// Sends the <see cref="BeforeBroadcastAttemptEvent"/> to the sending entity if the packets SendBeforeBroadcastAttemptEvent field is set to true.
-    /// The recipients is set to the modified recipient list.
-    /// </summary>
-    /// <returns>false if the broadcast was canceled</returns>
-    private bool CheckRecipientsList(DeviceNetworkPacketEvent packet, ref HashSet<Device> recipients)
-    {
-        var manager = EnsureManager();
-        if (!manager.Comp.Networks.ContainsKey(packet.NetId) || !manager.Comp.Networks[packet.NetId].Devices.ContainsKey(packet.SenderAddress))
-            return false;
-
-        var sender = manager.Comp.Networks[packet.NetId].Devices[packet.SenderAddress];
-        if (!sender.SendBroadcastAttemptEvent)
-            return true;
-
-        var beforeBroadcastAttemptEvent = new BeforeBroadcastAttemptEvent(recipients);
-        RaiseLocalEvent(packet.Sender, ref beforeBroadcastAttemptEvent, true);
-
-        if (beforeBroadcastAttemptEvent.Cancelled || beforeBroadcastAttemptEvent.ModifiedRecipients == null)
-            return false;
-
-        recipients = beforeBroadcastAttemptEvent.ModifiedRecipients;
-        return true;
-    }
-
-    private void SendToConnections(ReadOnlySpan<Device> connections, DeviceNetworkPacketEvent packet)
-    {
-        if (Deleted(packet.Sender))
-        {
-            return;
-        }
-
-        var xform = Transform(packet.Sender);
-
-        var senderPos = _transformSystem.GetWorldPosition(xform);
-
-        foreach (var connection in connections)
-        {
-            if (connection.DeviceOwner == packet.Sender)
-                continue;
-
-            var beforeEv = new BeforePacketSentEvent(packet.Sender, xform, senderPos, connection.NetIdEnum.ToString(), packet.Frequency);
-            RaiseLocalEvent(connection.DeviceOwner, ref beforeEv);
-
-            if (!beforeEv.Cancelled)
-                RaiseLocalEvent(connection.DeviceOwner, ref packet);
-            else
-                beforeEv.Cancelled = false;
         }
     }
 }
