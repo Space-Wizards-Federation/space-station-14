@@ -9,7 +9,7 @@ namespace Content.Client.DirectionalArrowIndicator;
 /// System responsible for handling <see cref="DirectionalArrowIndicatorComponent"/>s,
 /// spawning directional arrow indicators clientside when an entity is examined.
 /// </summary>
-public sealed class DirectionalArrowIndicatorSystem : EntitySystem
+public sealed partial class DirectionalArrowIndicatorSystem : EntitySystem
 {
     [Dependency] private TransformSystem _transform = default!;
 
