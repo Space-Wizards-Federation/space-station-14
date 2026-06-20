@@ -47,7 +47,7 @@ public class DeviceNetworkingBenchmark
       transmitFrequency: 100
       receiveFrequency: 100
       deviceNetId: Wireless
-    - type: WirelessNetworkConnection
+    - type: WirelessNetwork
       range: 100
         ";
 

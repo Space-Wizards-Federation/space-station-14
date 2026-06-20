@@ -1,6 +1,5 @@
 using Content.Shared.DeviceNetwork;
 using JetBrains.Annotations;
-using Robust.Shared.Prototypes;
 using System.Buffers;
 using Content.Server.GameTicking.Events;
 using Content.Shared.DeviceNetwork.Components;
@@ -18,7 +17,6 @@ namespace Content.Server.DeviceNetwork.Systems;
 [UsedImplicitly]
 public sealed partial class DeviceNetworkSystem : SharedDeviceNetworkSystem
 {
-
     [Dependency] private DeviceListSystem _deviceLists = default!;
     [Dependency] private NetworkConfiguratorSystem _configurator = default!;
     [Dependency] private PvsOverrideSystem _pvsOverride = default!;
