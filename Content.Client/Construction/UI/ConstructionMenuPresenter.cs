@@ -44,7 +44,7 @@ namespace Content.Client.Construction.UI
         // map recipes to grid buttons since grid buttons can't hold metadata
         private Dictionary<ProtoId<ConstructionPrototype>, ContainerButton> _gridRecipeButtons = new();
         private string _selectedCategory = string.Empty;
-        private List<HistoryRecord> _recipeHistory = [];
+        private List<RecipeHistoryRecord> _recipeHistory = [];
         /// <summary>Index of the selected recipe history record. -1 means no record is selected.</summary>
         private int _recipeHistoryIndex = -1;
 
@@ -491,7 +491,7 @@ namespace Content.Client.Construction.UI
                 _recipeHistory.RemoveRange(removeFromIdx, numElementsToRemove);
             }
 
-            _recipeHistory.Add(new HistoryRecord()
+            _recipeHistory.Add(new RecipeHistoryRecord()
             {
                 ConstructionProtoId = constructionProto,
                 Category = constructionProto.Category,
@@ -527,7 +527,7 @@ namespace Content.Client.Construction.UI
         /// <summary>
         /// Attempts to select recipe from history using a history entry.
         /// </summary>
-        private void TrySelectRecipeFromHistory(HistoryRecord record)
+        private void TrySelectRecipeFromHistory(RecipeHistoryRecord record)
         {
             if(!_prototypeManager.TryIndex(record.ConstructionProtoId, out var constructionProto))
                 return;
@@ -803,25 +803,10 @@ namespace Content.Client.Construction.UI
 }
 
 /// <summary>
-/// Represents a construction menu history entry.
+/// Represents a construction menu recipe history entry.
 /// </summary>
-internal struct HistoryRecord : IEquatable<HistoryRecord>
+internal struct RecipeHistoryRecord : IEquatable<RecipeHistoryRecord>
 {
-    public bool Equals(HistoryRecord other)
-    {
-        return this == other;
-    }
-
-    public override bool Equals(object? obj)
-    {
-        return obj is HistoryRecord other && Equals(other);
-    }
-
-    public override int GetHashCode()
-    {
-        return HashCode.Combine(ConstructionProtoId.GetHashCode(), CategoryId.GetHashCode());
-    }
-
     public ProtoId<ConstructionPrototype> ConstructionProtoId;
 
     /// <summary>
@@ -830,13 +815,27 @@ internal struct HistoryRecord : IEquatable<HistoryRecord>
     public int CategoryId;
     public string Category;
 
-    public static bool operator == (HistoryRecord left, HistoryRecord right)
+    public bool Equals(RecipeHistoryRecord other)
+    {
+        return this == other;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is RecipeHistoryRecord other && Equals(other);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(ConstructionProtoId.GetHashCode(), CategoryId.GetHashCode());
+    }
+    public static bool operator == (RecipeHistoryRecord left, RecipeHistoryRecord right)
     {
         return left.ConstructionProtoId.Equals(right.ConstructionProtoId)
             &&  left.CategoryId == right.CategoryId;
     }
 
-    public static bool operator != (HistoryRecord left, HistoryRecord right)
+    public static bool operator != (RecipeHistoryRecord left, RecipeHistoryRecord right)
     {
         return !left.ConstructionProtoId.Equals(right.ConstructionProtoId);
     }
