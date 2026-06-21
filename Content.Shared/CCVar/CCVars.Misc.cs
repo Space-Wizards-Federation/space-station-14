@@ -45,6 +45,13 @@ public sealed partial class CCVars
         CVarDef.Create("afk.confirm_timeout", 60f, CVar.SERVER | CVar.REPLICATED);
 
     /// <summary>
+    ///     Sound played when the AFK confirmation window opens.
+    /// </summary>
+    [CVarControl(AdminFlags.VarEdit)]
+    public static readonly CVarDef<string> AfkConfirmSound =
+        CVarDef.Create("afk.confirm_sound", "/Audio/Effects/adminhelp.ogg", CVar.SERVER | CVar.REPLICATED);
+
+    /// <summary>
     ///     Flavor limit. This is to ensure that having a large mass of flavors in
     ///     some food object won't spam a user with flavors.
     /// </summary>
