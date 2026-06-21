@@ -35,7 +35,7 @@ public sealed partial class CCVars
     /// </summary>
     [CVarControl(AdminFlags.VarEdit, min: 0f, max: float.MaxValue)]
     public static readonly CVarDef<float> AfkTime =
-        CVarDef.Create("afk.time", 300f, CVar.SERVERONLY);
+        CVarDef.Create("afk.time", 300f, CVar.SERVER | CVar.REPLICATED);
 
     /// <summary>
     ///     How long a player has to confirm they are not AFK before being disconnected.
