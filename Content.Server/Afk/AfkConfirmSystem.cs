@@ -39,6 +39,7 @@ public sealed partial class AfkConfirmSystem : EntitySystem
         // Unafking does NOT clear it, require them to confirm via the window so they don't just random mash buttons.
         SubscribeLocalEvent<AFKEvent>(OnAfk);
         _players.PlayerStatusChanged += OnPlayerStatusChanged;
+        _cfg.OnValueChanged(CCVars.AfkTime, OnAfkTimeChanged);
     }
 
     public override void Shutdown()
@@ -52,6 +53,7 @@ public sealed partial class AfkConfirmSystem : EntitySystem
 
         _confirmations.Clear();
         _players.PlayerStatusChanged -= OnPlayerStatusChanged;
+        _cfg.UnsubValueChanged(CCVars.AfkTime, OnAfkTimeChanged);
     }
 
     private void OnAfk(ref AFKEvent ev)
@@ -93,6 +95,19 @@ public sealed partial class AfkConfirmSystem : EntitySystem
     {
         if (args.NewStatus == SessionStatus.Disconnected)
             _confirmations.Remove(args.Session);
+    }
+
+    private void OnAfkTimeChanged(float value)
+    {
+        if (value > 0)
+            return;
+
+        foreach (var confirmation in _confirmations.Values)
+        {
+            confirmation.Eui?.Close();
+        }
+
+        _confirmations.Clear();
     }
 
     public void Confirm(ICommonSession session)
