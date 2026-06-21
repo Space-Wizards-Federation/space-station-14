@@ -166,13 +166,7 @@ public sealed partial class PathfindingSystem
             {
                 args.End,
             },
-            TileCost = node =>
-            {
-                if (!nodes.Contains(node))
-                    return 0f;
-
-                return 1f;
-            }
+            EdgeMultiplier = (_, node) => !nodes.Contains(node) ? 0f : 1f,
         });
 
         return result.Path;

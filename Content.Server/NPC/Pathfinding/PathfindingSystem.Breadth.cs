@@ -3,7 +3,7 @@ namespace Content.Server.NPC.Pathfinding;
 public sealed partial class PathfindingSystem
 {
     /*
-     * Handle BFS searches from Start->End. Doesn't consider NPC pathfinding.
+     * Handles small tile-space searches. This does not use the NPC navmesh.
      */
 
     /// <summary>
@@ -16,13 +16,16 @@ public sealed partial class PathfindingSystem
 
         public bool Diagonals = false;
 
-        public Func<Vector2i, float>? TileCost;
+        /// <summary>
+        /// Optional multiplier for traversing an edge. Return 0 or less to block traversal.
+        /// </summary>
+        public Func<Vector2i, Vector2i, float>? EdgeMultiplier;
 
         public int Limit = 10000;
     }
 
     /// <summary>
-    /// Gets a BFS path from start to any end. Can also supply an optional tile-cost for tiles.
+    /// Gets the lowest-cost tile path from start to any end.
     /// </summary>
     public SimplePathResult GetBreadthPath(BreadthPathArgs args)
     {
@@ -40,7 +43,6 @@ public sealed partial class PathfindingSystem
 
             if (args.Ends.Contains(node))
             {
-                // Found target
                 var path = ReconstructPath(node, cameFrom);
 
                 return new SimplePathResult()
@@ -58,17 +60,19 @@ public sealed partial class PathfindingSystem
                 {
                     for (var y = -1; y <= 1; y++)
                     {
-                        var neighbor = node + new Vector2i(x, y);
-                        var neighborCost = OctileDistance(node, neighbor) * args.TileCost?.Invoke(neighbor) ?? 1f;
+                        if (x == 0 && y == 0)
+                            continue;
 
-                        if (neighborCost.Equals(0f))
+                        var neighbor = node + new Vector2i(x, y);
+                        var stepCost = x == 0 || y == 0 ? 1f : 1.41f;
+                        var neighborCost = stepCost * (args.EdgeMultiplier?.Invoke(node, neighbor) ?? 1f);
+
+                        if (neighborCost <= 0f)
                         {
                             continue;
                         }
 
-                        // f = g + h
-                        // gScore is distance to the start node
-                        // hScore is distance to the end node
+                        // gScore is distance to the start node.
                         var gScore = gCost + neighborCost;
 
                         // Slower to get here so just ignore it.
@@ -79,12 +83,6 @@ public sealed partial class PathfindingSystem
 
                         cameFrom[neighbor] = node;
                         costSoFar[neighbor] = gScore;
-                        // pFactor is tie-breaker where the fscore is otherwise equal.
-                        // See http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html#breaking-ties
-                        // There's other ways to do it but future consideration
-                        // The closer the fScore is to the actual distance then the better the pathfinder will be
-                        // (i.e. somewhere between 1 and infinite)
-                        // Can use hierarchical pathfinder or whatever to improve the heuristic but this is fine for now.
                         frontier.Enqueue(neighbor, gScore);
                     }
                 }
@@ -95,17 +93,19 @@ public sealed partial class PathfindingSystem
                 {
                     for (var y = -1; y <= 1; y++)
                     {
-                        if (x != 0 && y != 0)
+                        if ((x == 0) == (y == 0))
                             continue;
 
                         var neighbor = node + new Vector2i(x, y);
-                        var neighborCost = ManhattanDistance(node, neighbor) * args.TileCost?.Invoke(neighbor) ?? 1f;
+                        var neighborCost = args.EdgeMultiplier?.Invoke(node, neighbor) ?? 1f;
 
-                        if (neighborCost.Equals(0f))
+                        if (neighborCost <= 0f)
                             continue;
 
+                        // gScore is distance to the start node.
                         var gScore = gCost + neighborCost;
 
+                        // Slower to get here so just ignore it.
                         if (costSoFar.TryGetValue(neighbor, out var nextValue) && gScore >= nextValue)
                             continue;
 
