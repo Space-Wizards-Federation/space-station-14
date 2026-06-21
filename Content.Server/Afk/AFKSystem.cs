@@ -1,7 +1,9 @@
 using Content.Server.Afk.Events;
 using Content.Server.GameTicking;
+using Content.Shared.CCVar;
 using Content.Shared.Instruments;
 using Robust.Server.Player;
+using Robust.Shared.Configuration;
 using Robust.Shared.Enums;
 using Robust.Shared.Input;
 using Robust.Shared.Player;
@@ -18,6 +20,7 @@ public sealed partial class AFKSystem : EntitySystem
     [Dependency] private IPlayerManager _playerManager = default!;
     [Dependency] private IGameTiming _timing = default!;
     [Dependency] private GameTicker _ticker = default!;
+    [Dependency] private IConfigurationManager _cfg = default!;
 
     /// <summary>
     /// Don't need to do it every tick.
@@ -25,6 +28,7 @@ public sealed partial class AFKSystem : EntitySystem
     private const float CheckDelay = 10f;
 
     private TimeSpan _nextCheckTime;
+    private float _afkTime;
 
     private readonly HashSet<ICommonSession> _afkPlayers = new();
 
@@ -33,6 +37,8 @@ public sealed partial class AFKSystem : EntitySystem
         base.Initialize();
         _playerManager.PlayerStatusChanged += OnPlayerChange;
         _afkManager.PlayerDidActionEvent += OnPlayerAction;
+        _afkTime = _cfg.GetCVar(CCVars.AfkTime);
+        _cfg.OnValueChanged(CCVars.AfkTime, OnAfkTimeChanged);
 
         SubscribeNetworkEvent<FullInputCmdMessage>(HandleInputCmd);
         // Temporary until instruments use BUIs like normal.
@@ -98,6 +104,7 @@ public sealed partial class AFKSystem : EntitySystem
         _afkPlayers.Clear();
         _playerManager.PlayerStatusChanged -= OnPlayerChange;
         _afkManager.PlayerDidActionEvent -= OnPlayerAction;
+        _cfg.UnsubValueChanged(CCVars.AfkTime, OnAfkTimeChanged);
     }
 
     private void OnPlayerAction(ICommonSession session)
@@ -113,6 +120,10 @@ public sealed partial class AFKSystem : EntitySystem
     {
         base.Update(frameTime);
 
+        // If disabled then ignore flagging anything.
+        if (_afkTime <= 0)
+            return;
+
         if (_timing.CurTime < _nextCheckTime)
             return;
 
@@ -120,13 +131,7 @@ public sealed partial class AFKSystem : EntitySystem
         // Flag everyone as non-afk unless the game is running.
         if (!CanFlagAfk(_ticker.RunLevel))
         {
-            foreach (var pSession in Filter.GetAllPlayers())
-            {
-                if (pSession.Status != SessionStatus.InGame)
-                    continue;
-
-                _afkManager.PlayerDidAction(pSession);
-            }
+            MarkAllInGamePlayersActive();
 
             // Technically we can double-fire afk events here but shouldn't matter.
             // We just want AFK timers reset by the time we get into round.
@@ -155,8 +160,31 @@ public sealed partial class AFKSystem : EntitySystem
         }
     }
 
-    internal static bool CanFlagAfk(GameRunLevel runLevel)
+    private static bool CanFlagAfk(GameRunLevel runLevel)
     {
         return runLevel == GameRunLevel.InRound;
+    }
+
+    private void OnAfkTimeChanged(float value)
+    {
+        var wasEnabled = _afkTime > 0;
+        var isEnabled = value > 0;
+
+        // Reset AFK timers if we turn it on / off
+        if (wasEnabled != isEnabled)
+            MarkAllInGamePlayersActive();
+
+        _afkTime = value;
+    }
+
+    private void MarkAllInGamePlayersActive()
+    {
+        foreach (var pSession in Filter.GetAllPlayers())
+        {
+            if (pSession.Status != SessionStatus.InGame)
+                continue;
+
+            _afkManager.PlayerDidAction(pSession);
+        }
     }
 }
