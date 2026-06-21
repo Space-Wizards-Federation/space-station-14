@@ -30,6 +30,7 @@ public sealed partial class AfkConfirmSystem : EntitySystem
     [Dependency] private IAdminLogManager _adminLogger = default!;
 
     private readonly Dictionary<ICommonSession, AfkConfirmation> _confirmations = new();
+    private readonly Dictionary<ICommonSession, AfkConfirmation> _tempConfirmation = new();
 
     public override void Initialize()
     {
@@ -96,7 +97,7 @@ public sealed partial class AfkConfirmSystem : EntitySystem
 
     public void Confirm(ICommonSession session)
     {
-        if (!_confirmations.ContainsKey(session))
+        if (!_confirmations.Remove(session))
             return;
 
         _afkManager.PlayerDidAction(session);
@@ -109,7 +110,14 @@ public sealed partial class AfkConfirmSystem : EntitySystem
         if (_confirmations.Count == 0)
             return;
 
-        foreach (var (session, confirmation) in new Dictionary<ICommonSession, AfkConfirmation>(_confirmations))
+        _tempConfirmation.Clear();
+
+        foreach (var (session, c) in _confirmations)
+        {
+            _tempConfirmation.Add(session, c);
+        }
+
+        foreach (var (session, confirmation) in _tempConfirmation)
         {
             if (session.Status == SessionStatus.Disconnected)
             {
