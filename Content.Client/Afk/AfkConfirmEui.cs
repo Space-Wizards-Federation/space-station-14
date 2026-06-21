@@ -1,3 +1,4 @@
+using System.Numerics;
 using Content.Client.Eui;
 using Content.Shared.Afk;
 using Content.Shared.Eui;
@@ -6,6 +7,7 @@ using Robust.Client.Audio;
 using Robust.Client.Graphics;
 using Robust.Shared.Audio;
 using Robust.Shared.Player;
+using Robust.Shared.Random;
 
 namespace Content.Client.Afk;
 
@@ -13,10 +15,12 @@ namespace Content.Client.Afk;
 public sealed partial class AfkConfirmEui : BaseEui
 {
     private static readonly SoundSpecifier BwoinkSound = new SoundPathSpecifier("/Audio/Effects/adminhelp.ogg");
+    private const float MaxWindowOffset = 64f;
 
     [Dependency] private IClyde _clyde = default!;
     [Dependency] private IEntityManager _entManager = default!;
-    private AudioSystem _audio = default!;
+    [Dependency] private IRobustRandom _random = default!;
+    private AudioSystem _audio;
 
     private readonly AfkConfirmWindow _window = new();
 
@@ -37,7 +41,20 @@ public sealed partial class AfkConfirmEui : BaseEui
     {
         _clyde.RequestWindowAttention();
         _audio.PlayGlobal(BwoinkSound, Filter.Local(), false);
-        _window.OpenCentered();
+
+        var screenSize = _clyde.ScreenSize;
+        var screenSizeVector = new Vector2(screenSize.X, screenSize.Y);
+        var offset = new Vector2(
+            RandomOffset(),
+            RandomOffset());
+        var relativePosition = new Vector2(0.5f) + offset / screenSizeVector;
+
+        _window.OpenCenteredAt(relativePosition);
+    }
+
+    private float RandomOffset()
+    {
+        return _random.NextFloat() * MaxWindowOffset * 2 - MaxWindowOffset;
     }
 
     public override void Closed()

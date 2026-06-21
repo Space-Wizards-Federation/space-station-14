@@ -59,17 +59,17 @@ namespace Content.Client.Administration.UI.Tabs
 
         private void AfkTimeChanged(float value)
         {
-            AfkTime.Text = value.ToString(CultureInfo.InvariantCulture);
+            AfkTime.PlaceHolder = value.ToString(CultureInfo.InvariantCulture);
         }
 
         private void AdminAfkTimeChanged(float value)
         {
-            AdminAfkTime.Text = value.ToString(CultureInfo.InvariantCulture);
+            AdminAfkTime.PlaceHolder = value.ToString(CultureInfo.InvariantCulture);
         }
 
         private void AfkConfirmTimeoutChanged(float value)
         {
-            AfkConfirmTimeout.Text = value.ToString(CultureInfo.InvariantCulture);
+            AfkConfirmTimeout.PlaceHolder = value.ToString(CultureInfo.InvariantCulture);
         }
 
         protected override void Dispose(bool disposing)

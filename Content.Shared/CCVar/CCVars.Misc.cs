@@ -42,7 +42,7 @@ public sealed partial class CCVars
     /// </summary>
     [CVarControl(AdminFlags.VarEdit, min: 0f, max: float.MaxValue)]
     public static readonly CVarDef<float> AfkConfirmTimeout =
-        CVarDef.Create("afk.confirm_timeout", 60f, CVar.SERVERONLY);
+        CVarDef.Create("afk.confirm_timeout", 60f, CVar.SERVER | CVar.REPLICATED);
 
     /// <summary>
     ///     Flavor limit. This is to ensure that having a large mass of flavors in

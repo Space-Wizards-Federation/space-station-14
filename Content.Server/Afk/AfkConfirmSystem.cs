@@ -7,6 +7,7 @@ using Content.Shared.CCVar;
 using Content.Shared.Chat;
 using Content.Shared.Database;
 using Content.Shared.Popups;
+using JetBrains.Annotations;
 using Robust.Server.Player;
 using Robust.Shared.Configuration;
 using Robust.Shared.Enums;
@@ -34,8 +35,8 @@ public sealed partial class AfkConfirmSystem : EntitySystem
     {
         base.Initialize();
 
+        // Unafking does NOT clear it, require them to confirm via the window so they don't just random mash buttons.
         SubscribeLocalEvent<AFKEvent>(OnAfk);
-        SubscribeLocalEvent<UnAFKEvent>(OnUnAfk);
         _players.PlayerStatusChanged += OnPlayerStatusChanged;
     }
 
@@ -44,7 +45,9 @@ public sealed partial class AfkConfirmSystem : EntitySystem
         base.Shutdown();
 
         foreach (var confirmation in _confirmations.Values)
-            confirmation.Eui.Close();
+        {
+            confirmation.Eui?.Close();
+        }
 
         _confirmations.Clear();
         _players.PlayerStatusChanged -= OnPlayerStatusChanged;
@@ -52,24 +55,37 @@ public sealed partial class AfkConfirmSystem : EntitySystem
 
     private void OnAfk(ref AFKEvent ev)
     {
+        TryStartConfirmation(ev.Session);
+    }
+
+    /// <summary>
+    /// Starts an AFK confirmation prompt if none exists.
+    /// </summary>
+    /// <param name="session">Session to check.</param>
+    /// <param name="requireAttached">Are they required to be attached to an entity.</param>
+    /// <returns></returns>
+    public bool TryStartConfirmation(ICommonSession session, bool requireAttached = false)
+    {
         var timeout = _cfg.GetCVar(CCVars.AfkConfirmTimeout);
-        if (timeout <= 0 || ev.Session.Status is not (SessionStatus.Connected or SessionStatus.InGame) || _confirmations.ContainsKey(ev.Session))
-            return;
+
+        if (timeout <= 0
+            || session.Status == SessionStatus.Disconnected
+            || _confirmations.ContainsKey(session)
+            || requireAttached && session.AttachedEntity == null)
+        {
+            return false;
+        }
 
         var deadline = _timing.RealTime + TimeSpan.FromSeconds(timeout);
         var eui = new AfkConfirmEui(this, deadline);
-        _confirmations[ev.Session] = new AfkConfirmation(eui, deadline);
-        _eui.OpenEui(eui, ev.Session);
+        _confirmations[session] = new AfkConfirmation(eui, deadline);
+        _eui.OpenEui(eui, session);
         _adminLogger.Add(LogType.Connection, LogImpact.Low,
-            $"{ev.Session.Name} ({ev.Session.UserId}) was shown the AFK confirmation window with {timeout} seconds to respond.");
+            $"{session.Name} ({session.UserId}) was shown the AFK confirmation window with {timeout} seconds to respond.");
 
         var message = Loc.GetString("afk-system-afk-warning", ("seconds", MathF.Ceiling(timeout)));
-        _chat.ChatMessageToOne(ChatChannel.Server, message, message, EntityUid.Invalid, false, ev.Session.Channel);
-    }
-
-    private void OnUnAfk(ref UnAFKEvent ev)
-    {
-        ClearConfirmation(ev.Session);
+        _chat.ChatMessageToOne(ChatChannel.Server, message, message, EntityUid.Invalid, false, session.Channel);
+        return true;
     }
 
     private void OnPlayerStatusChanged(object? sender, SessionStatusEventArgs args)
@@ -105,20 +121,32 @@ public sealed partial class AfkConfirmSystem : EntitySystem
                 continue;
 
             _confirmations.Remove(session);
-            confirmation.Eui.Close();
+            confirmation.Eui?.Close();
             _adminLogger.Add(LogType.Connection, LogImpact.Medium,
                 $"{session.Name} ({session.UserId}) timed out on the AFK confirmation window and was disconnected.");
             session.Channel.Disconnect(Loc.GetString("afk-system-kick-reason"));
         }
     }
 
-    private void ClearConfirmation(ICommonSession session)
+    [PublicAPI]
+    public bool ClearConfirmation(ICommonSession session)
     {
         if (!_confirmations.Remove(session, out var confirmation))
-            return;
+            return false;
 
-        confirmation.Eui.Close();
+        confirmation.Eui?.Close();
+        return true;
     }
 
-    private sealed record AfkConfirmation(AfkConfirmEui Eui, TimeSpan Deadline);
+    internal void AddConfirmationForTest(ICommonSession session, TimeSpan deadline)
+    {
+        _confirmations[session] = new AfkConfirmation(null, deadline);
+    }
+
+    internal bool HasConfirmation(ICommonSession session)
+    {
+        return _confirmations.ContainsKey(session);
+    }
+
+    private sealed record AfkConfirmation(AfkConfirmEui? Eui, TimeSpan Deadline);
 }
