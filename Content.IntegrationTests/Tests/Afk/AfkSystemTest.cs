@@ -39,6 +39,7 @@ public sealed class AfkSystemTest : GameTest
     public override PoolSettings PoolSettings => new()
     {
         Connected = true,
+        // Load bearing for connection I think.
         Dirty = true,
         DummyTicker = false,
     };
