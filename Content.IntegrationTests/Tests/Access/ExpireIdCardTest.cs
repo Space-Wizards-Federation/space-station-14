@@ -60,7 +60,7 @@ namespace Content.IntegrationTests.Tests.Access
                 Assert.That(expireComp.ExpireMessage, Is.EqualTo(new LocId("genpop-prisoner-id-expire")));
             });
 
-            // Set the expire time to 1 second in the future
+            // Set the expire time to the future
             _sharedIdCardSystem.SetExpireTime(ent, expireTime);
             Assert.Multiple(() =>
             {
