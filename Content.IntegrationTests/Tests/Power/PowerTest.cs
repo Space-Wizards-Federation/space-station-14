@@ -1,14 +1,17 @@
 #nullable enable
 using Content.IntegrationTests.Fixtures;
+using Content.Server.Atmos.EntitySystems;
 using Content.Server.NodeContainer.EntitySystems;
 using Content.Server.Power.Components;
 using Content.Server.Power.EntitySystems;
 using Content.Server.Power.Nodes;
+using Content.Shared.Atmos.Components;
 using Content.Shared.Coordinates;
 using Content.Shared.NodeContainer;
 using Content.Shared.Power.Components;
 using Robust.Shared.GameObjects;
 using Robust.Shared.Map;
+using Robust.Shared.Map.Components;
 using Robust.Shared.Maths;
 using Robust.Shared.Timing;
 
@@ -161,6 +164,48 @@ namespace Content.IntegrationTests.Tests.Power
   - type: ExtensionCableReceiver
   - type: Transform
     anchored: true
+
+- type: entity
+  id: ExtensionCableProviderTestDummy
+  components:
+  - type: ExtensionCableProvider
+    transferRange: 2
+  - type: PowerProvider
+    voltage: Apc
+  - type: Transform
+    anchored: true
+  - type: Physics
+    bodyType: Static
+
+- type: entity
+  parent: ExtensionCableProviderTestDummy
+  id: WallMountedExtensionCableProviderTestDummy
+  components:
+  - type: WallMount
+
+- type: entity
+  parent: ExtensionCableProviderTestDummy
+  id: ApcExtensionCableProviderTestDummy
+  components:
+  - type: Apc
+    voltage: Apc
+
+- type: entity
+  id: ExtensionCableReceiverTestDummy
+  components:
+  - type: ApcPowerReceiver
+  - type: ExtensionCableReceiver
+    receptionRange: 2
+  - type: Transform
+    anchored: true
+  - type: Physics
+    bodyType: Static
+
+- type: entity
+  parent: ExtensionCableReceiverTestDummy
+  id: WallMountedExtensionCableReceiverTestDummy
+  components:
+  - type: WallMount
 ";
         /// <summary>
         ///     Test small power net with a simple surplus of power over the loads.
@@ -1328,6 +1373,171 @@ namespace Content.IntegrationTests.Tests.Power
                     Assert.That(apcNetBattery.CurrentSupply, Is.EqualTo(1).Within(0.1));
                 });
             });
+        }
+
+        [Test]
+        public async Task ExtensionCableWallMountedProviderUsesFrontTileForRange()
+        {
+            var pair = Pair;
+            var server = pair.Server;
+            var mapManager = server.ResolveDependency<IMapManager>();
+            var entityManager = server.ResolveDependency<IEntityManager>();
+            var extensionCableSystem = entityManager.System<ExtensionCableSystem>();
+            var mapSys = entityManager.System<SharedMapSystem>();
+            EntityUid providerEnt = default;
+            ApcPowerReceiverComponent receiver = default!;
+
+            await server.WaitAssertion(() =>
+            {
+                var grid = CreateGrid(mapManager, mapSys);
+                SetTiles(mapSys,
+                    grid,
+                    new Vector2i(0, 0),
+                    new Vector2i(0, 1),
+                    new Vector2i(0, 2),
+                    new Vector2i(0, 3));
+
+                var receiverEnt = entityManager.SpawnEntity(
+                    "ExtensionCableReceiverTestDummy",
+                    grid.Owner.ToCoordinates(0, 0));
+                providerEnt = entityManager.SpawnEntity(
+                    "WallMountedExtensionCableProviderTestDummy",
+                    grid.Owner.ToCoordinates(0, 3));
+                receiver = entityManager.GetComponent<ApcPowerReceiverComponent>(receiverEnt);
+
+                extensionCableSystem.SetProviderTransferRange(providerEnt, 2);
+                extensionCableSystem.SetReceiverReceptionRange(receiverEnt, 2);
+            });
+
+            await server.WaitAssertion(() =>
+            {
+                Assert.That(receiver.Provider,
+                    Is.SameAs(entityManager.GetComponent<ApcPowerProviderComponent>(providerEnt)),
+                    "Wall-mounted providers should use the floor tile in front of them for extension-cable reach.");
+            });
+        }
+
+        [Test]
+        public async Task ExtensionCableWallMountedReceiverUsesFrontTileForRange()
+        {
+            var pair = Pair;
+            var server = pair.Server;
+            var mapManager = server.ResolveDependency<IMapManager>();
+            var entityManager = server.ResolveDependency<IEntityManager>();
+            var extensionCableSystem = entityManager.System<ExtensionCableSystem>();
+            var mapSys = entityManager.System<SharedMapSystem>();
+            EntityUid providerEnt = default;
+            ApcPowerReceiverComponent receiver = default!;
+
+            await server.WaitAssertion(() =>
+            {
+                var grid = CreateGrid(mapManager, mapSys);
+                SetTiles(mapSys, grid,
+                    new Vector2i(0, 0),
+                    new Vector2i(0, 1),
+                    new Vector2i(0, 2),
+                    new Vector2i(0, 3));
+
+                var receiverEnt = entityManager.SpawnEntity(
+                    "WallMountedExtensionCableReceiverTestDummy",
+                    grid.Owner.ToCoordinates(0, 3));
+                providerEnt = entityManager.SpawnEntity(
+                    "ExtensionCableProviderTestDummy",
+                    grid.Owner.ToCoordinates(0, 0));
+                receiver = entityManager.GetComponent<ApcPowerReceiverComponent>(receiverEnt);
+
+                extensionCableSystem.SetProviderTransferRange(providerEnt, 2);
+                extensionCableSystem.SetReceiverReceptionRange(receiverEnt, 2);
+            });
+
+            await server.WaitAssertion(() =>
+            {
+                Assert.That(receiver.Provider,
+                    Is.SameAs(entityManager.GetComponent<ApcPowerProviderComponent>(providerEnt)),
+                    "Wall-mounted receivers should use the floor tile in front of them for extension-cable reach.");
+            });
+        }
+
+        [Test]
+        public async Task ExtensionCablePrefersOpenRouteOverWallRoute()
+        {
+            var pair = Pair;
+            var server = pair.Server;
+            var mapManager = server.ResolveDependency<IMapManager>();
+            var entityManager = server.ResolveDependency<IEntityManager>();
+            var atmosphereSystem = entityManager.System<AtmosphereSystem>();
+            var extensionCableSystem = entityManager.System<ExtensionCableSystem>();
+            var mapSys = entityManager.System<SharedMapSystem>();
+            EntityUid openProviderEnt = default;
+            ApcPowerReceiverComponent receiver = default!;
+
+            await server.WaitAssertion(() =>
+            {
+                var grid = CreateGrid(mapManager, mapSys);
+                SetTiles(mapSys, grid,
+                    new Vector2i(0, 0),
+                    new Vector2i(0, 1),
+                    new Vector2i(0, 2),
+                    new Vector2i(1, 0),
+                    new Vector2i(2, 0),
+                    new Vector2i(3, 0));
+
+                var wallCoordinates = mapSys.GridTileToLocal(
+                    grid.Owner,
+                    grid.Comp,
+                    new Vector2i(0, 1));
+                entityManager.SpawnEntity("WallReinforced", wallCoordinates);
+
+                // we now have an L shaped grid with the receiver at the turn, and a wall partway across the short leg,
+                // with providers at both ends.
+
+                var gridAtmos = entityManager.EnsureComponent<GridAtmosphereComponent>(grid);
+                var overlay = entityManager.EnsureComponent<GasTileOverlayComponent>(grid);
+                var xform = entityManager.GetComponent<TransformComponent>(grid);
+                var processEnt = new Entity<
+                    GridAtmosphereComponent,
+                    GasTileOverlayComponent,
+                    MapGridComponent,
+                    TransformComponent
+                >(grid.Owner, gridAtmos, overlay, grid.Comp, xform);
+                atmosphereSystem.RunProcessingFull(processEnt, grid.Owner, atmosphereSystem.AtmosTickRate);
+
+                var wallProviderEnt = entityManager.SpawnEntity(
+                    "ExtensionCableProviderTestDummy",
+                    grid.Owner.ToCoordinates(0, 2));
+                openProviderEnt = entityManager.SpawnEntity(
+                    "ExtensionCableProviderTestDummy",
+                    grid.Owner.ToCoordinates(3, 0));
+                var receiverEnt = entityManager.SpawnEntity(
+                    "ExtensionCableReceiverTestDummy",
+                    grid.Owner.ToCoordinates(0, 0));
+                receiver = entityManager.GetComponent<ApcPowerReceiverComponent>(receiverEnt);
+
+                extensionCableSystem.SetProviderTransferRange(wallProviderEnt, 4);
+                extensionCableSystem.SetProviderTransferRange(openProviderEnt, 4);
+                extensionCableSystem.SetReceiverReceptionRange(receiverEnt, 4);
+            });
+
+            await server.WaitAssertion(() =>
+            {
+                Assert.That(receiver.Provider,
+                    Is.SameAs(entityManager.GetComponent<ApcPowerProviderComponent>(openProviderEnt)),
+                    "Extension cables should prefer a longer open-floor path over a shorter path through a wall.");
+            });
+        }
+
+        private static Entity<MapGridComponent> CreateGrid(IMapManager mapManager, SharedMapSystem mapSys)
+        {
+            mapSys.CreateMap(out var mapId);
+            return mapManager.CreateGridEntity(mapId);
+        }
+
+        private static void SetTiles(SharedMapSystem mapSys, Entity<MapGridComponent> grid, params Vector2i[] tiles)
+        {
+            foreach (var tile in tiles)
+            {
+                mapSys.SetTile(grid, tile, new Tile(1));
+            }
         }
 
     }
