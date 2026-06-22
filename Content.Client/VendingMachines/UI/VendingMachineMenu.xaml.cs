@@ -145,7 +145,7 @@ namespace Content.Client.VendingMachines.UI
         {
             if (categories == null)
             {
-                Categories.Orphan();
+                CategoryBox.Orphan();
                 _category = "";
                 return;
             }
