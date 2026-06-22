@@ -276,7 +276,7 @@ namespace Content.Server.Power.EntitySystems
 
             var start = GetCableReachabilityTile(owner, xform, grid);
             var coordinates = _map.GridTileToLocal(gridUid, gridComp, start);
-            var nearbyEntities = _map.GetCellsInSquareArea(gridUid, gridComp, coordinates, range);
+            var nearbyEntities = _map.GetCellsInSquareArea(gridUid, gridComp, coordinates, range + 1);
 
             var candidates = new Dictionary<Vector2i, Entity<ExtensionCableProviderComponent>>();
             foreach (var entity in nearbyEntities)
