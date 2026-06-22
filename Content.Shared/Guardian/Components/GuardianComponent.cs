@@ -1,17 +1,18 @@
 using Robust.Shared.Audio;
+using Robust.Shared.GameStates;
 
-namespace Content.Server.Guardian
+namespace Content.Shared.Guardian.Components
 {
     /// <summary>
     /// Given to guardians to monitor their link with the host
     /// </summary>
-    [RegisterComponent]
+    [RegisterComponent, NetworkedComponent, AutoGenerateComponentState]
     public sealed partial class GuardianComponent : Component
     {
         /// <summary>
         /// The guardian host entity
         /// </summary>
-        [DataField]
+        [DataField, AutoNetworkedField]
         public EntityUid? Host;
 
         /// <summary>
@@ -29,7 +30,7 @@ namespace Content.Server.Guardian
         /// <summary>
         /// If the guardian is currently manifested
         /// </summary>
-        [DataField]
+        [DataField, AutoNetworkedField]
         public bool GuardianLoose;
 
         /// <remarks>
@@ -39,10 +40,16 @@ namespace Content.Server.Guardian
         public LocId GuardianDamagePopup = "guardian-entity-taking-damage";
 
         /// <summary>
-        /// Sound played when a mob starts hosting the guardian.
+        /// Sound played when a mob obtains a guardian through injection.
         /// </summary>
         [DataField]
         public SoundSpecifier InjectSound = new SoundPathSpecifier("/Audio/Effects/guardian_inject.ogg");
+
+        /// <summary>
+        /// Sound played when a mob obtains a guardian through a guardian deck.
+        /// </summary>
+        [DataField]
+        public SoundSpecifier DeckSound = new SoundPathSpecifier("/Audio/Effects/guardian_deck_shuffle.ogg");
 
         /// <summary>
         /// Sound played when the guardian enters critical state.
