@@ -78,7 +78,7 @@ public sealed partial class ChasmSystem : EntitySystem
         }
 
         // Give an opportunity to cancel the fall for whatever reason.
-        var checkEvent = new EntityTriesStartingFallingEvent(args.Tripper);
+        var checkEvent = new EntityStartFallingAttemptEvent(args.Tripper);
         RaiseLocalEvent(entity, ref checkEvent);
         if (checkEvent.Cancelled)
             return;

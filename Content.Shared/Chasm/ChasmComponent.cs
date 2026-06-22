@@ -32,16 +32,19 @@ public sealed partial class ChasmComponent : Component
 }
 
 /// <summary>
-/// This event is raised on a chasm when <paramref name="faller"/> tries to start falling into it. This is used to allow
+/// This event is raised on a chasm when <paramref name="Faller"/> tries to start falling into it. This is used to allow
 /// systems an opportunity to cancel the falling for whatever reason.
 /// </summary>
 [ByRefEvent]
-public sealed partial class EntityTriesStartingFallingEvent(EntityUid faller) : CancellableEntityEventArgs
+public record struct EntityStartFallingAttemptEvent(EntityUid Faller)
 {
-    public readonly EntityUid Faller = faller;
+    public readonly EntityUid Faller = Faller;
+    public bool Cancelled = false;
 }
 
+/// <summary>
 /// Raised on a chasm when it would cause an entity to fall but the chasm's white-/blacklist prevented it.
+/// </summary>
 [ByRefEvent]
 public readonly record struct FallerRejectedByChasmEvent(EntityUid Entity);
 
