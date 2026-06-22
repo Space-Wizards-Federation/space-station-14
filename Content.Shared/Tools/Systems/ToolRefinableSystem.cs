@@ -18,7 +18,6 @@ using Robust.Shared.Containers;
 using Robust.Shared.Physics.Systems;
 using Robust.Shared.Random;
 using Robust.Shared.Timing;
-using Robust.Shared.Utility;
 
 namespace Content.Shared.Tools.Systems;
 
@@ -150,10 +149,7 @@ public sealed partial class ToolRefinablSystem : EntitySystem
             var rng = new RobustRandom();
             rng.SetSeed(rndSeed);
 
-            if (_container.TryGetContainingContainer(uid, out var container))
-                _container.Remove((uid, null, null), container);
-
-            SpawnRefinement(component.RefineResult, uid, rng, container);
+            SpawnRefinement(component.RefineResult, uid, rng);
         }
 
         if (component.Sound != null)
@@ -163,10 +159,14 @@ public sealed partial class ToolRefinablSystem : EntitySystem
         _destructible.DestroyEntity(uid);
     }
 
-    private void SpawnRefinement(List<EntitySpawnEntry> spawnList, EntityUid source, IRobustRandom rng, BaseContainer? container)
+    private void SpawnRefinement(List<EntitySpawnEntry> spawnList, EntityUid source, IRobustRandom rng)
     {
         var spawns = EntitySpawnCollection.GetSpawns(spawnList, rng);
         var spawned = new List<EntityUid>(spawns.Count);
+
+        if (_container.TryGetContainingContainer(source, out var container))
+            _container.Remove((source, null, null), container);
+
         foreach (var protoId in spawns)
         {
             var refineResultUid = PredictedSpawnNextToOrDrop(protoId, source);
