@@ -148,7 +148,6 @@ public sealed partial class ToolRefinablSystem : EntitySystem
             var rndSeed = SharedRandomExtensions.HashCodeCombine((int)_gameTiming.CurTick.Value, args.User.Id, uid.Id);
             var rng = new RobustRandom();
             rng.SetSeed(rndSeed);
-
             SpawnRefinement(component.RefineResult, uid, rng);
         }
 
