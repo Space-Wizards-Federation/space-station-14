@@ -3,7 +3,6 @@ using System.Linq;
 using Content.Server.Atmos.EntitySystems;
 using Content.Server.Power.Components;
 using Content.Shared.Atmos;
-using Content.Shared.Atmos.Components;
 using Content.Shared.Wall;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Physics;
@@ -18,7 +17,6 @@ namespace Content.Server.Power.EntitySystems
         [Dependency] private AtmosphereSystem _atmosphere = default!;
         [Dependency] private SharedMapSystem _map = default!;
         [Dependency] private EntityQuery<ExtensionCableProviderComponent> _cableProviderQuery;
-        [Dependency] private EntityQuery<GridAtmosphereComponent> _gridAtmosQuery;
         [Dependency] private EntityQuery<WallMountComponent> _wallMountQuery;
         [Dependency] private EntityQuery<ApcComponent> _apcQuery;
 
@@ -27,9 +25,9 @@ namespace Content.Server.Power.EntitySystems
             base.Initialize();
 
             //Lifecycle events
-            SubscribeLocalEvent<ExtensionCableProviderComponent, ComponentStartup>(OnProviderStarted);
+            SubscribeLocalEvent<ExtensionCableProviderComponent, MapInitEvent>(OnProviderStarted);
             SubscribeLocalEvent<ExtensionCableProviderComponent, ComponentShutdown>(OnProviderShutdown);
-            SubscribeLocalEvent<ExtensionCableReceiverComponent, ComponentStartup>(OnReceiverStarted);
+            SubscribeLocalEvent<ExtensionCableReceiverComponent, MapInitEvent>(OnReceiverStarted);
             SubscribeLocalEvent<ExtensionCableReceiverComponent, ComponentShutdown>(OnReceiverShutdown);
 
             //Anchoring
@@ -51,7 +49,7 @@ namespace Content.Server.Power.EntitySystems
             ResetReceivers((uid, provider));
         }
 
-        private void OnProviderStarted(Entity<ExtensionCableProviderComponent> provider, ref ComponentStartup args)
+        private void OnProviderStarted(Entity<ExtensionCableProviderComponent> provider, ref MapInitEvent args)
         {
             Connect(provider);
         }
@@ -72,6 +70,9 @@ namespace Content.Server.Power.EntitySystems
 
         private void OnProviderAnchorStateChanged(Entity<ExtensionCableProviderComponent> provider, ref AnchorStateChangedEvent args)
         {
+            if (!IsMapInitialized(provider.Owner))
+                return;
+
             if (args.Anchored)
                 Connect(provider);
             else
@@ -97,6 +98,9 @@ namespace Content.Server.Power.EntitySystems
 
         private void OnProviderReAnchor(Entity<ExtensionCableProviderComponent> provider, ref ReAnchorEvent args)
         {
+            if (!IsMapInitialized(provider.Owner))
+                return;
+
             Disconnect(provider);
             Connect(provider);
         }
@@ -185,7 +189,7 @@ namespace Content.Server.Power.EntitySystems
             TryFindAndSetProvider((uid, receiver));
         }
 
-        private void OnReceiverStarted(Entity<ExtensionCableReceiverComponent> receiver, ref ComponentStartup args)
+        private void OnReceiverStarted(Entity<ExtensionCableReceiverComponent> receiver, ref MapInitEvent args)
         {
             if (TryComp(receiver.Owner, out PhysicsComponent? physicsComponent))
             {
@@ -202,6 +206,9 @@ namespace Content.Server.Power.EntitySystems
 
         private void OnReceiverAnchorStateChanged(Entity<ExtensionCableReceiverComponent> receiver, ref AnchorStateChangedEvent args)
         {
+            if (!IsMapInitialized(receiver.Owner))
+                return;
+
             if (args.Anchored)
             {
                 Connect(receiver);
@@ -214,6 +221,9 @@ namespace Content.Server.Power.EntitySystems
 
         private void OnReceiverReAnchor(Entity<ExtensionCableReceiverComponent> receiver, ref ReAnchorEvent args)
         {
+            if (!IsMapInitialized(receiver.Owner))
+                return;
+
             Disconnect(receiver);
             Connect(receiver);
         }
@@ -268,9 +278,6 @@ namespace Content.Server.Power.EntitySystems
                 foundProvider = null;
                 return false;
             }
-
-            Entity<GridAtmosphereComponent?> gridAtmos = gridUid;
-            _gridAtmosQuery.Resolve(ref gridAtmos, logMissing: false);
 
             Entity<MapGridComponent> grid = (gridUid, gridComp);
 
@@ -337,12 +344,10 @@ namespace Content.Server.Power.EntitySystems
                         return 0f;
 
                     var dir = (to - from).GetCardinalDir().ToAtmosDirection();
-                    var isBlocked = _atmosphere.IsTileAirBlockedCached(gridAtmos, from, dir)
-                                    || _atmosphere.IsTileAirBlockedCached(gridAtmos, to, dir.GetOpposite());
+                    var isBlocked = _atmosphere.IsTileAirBlocked(gridUid, from, dir, gridComp)
+                                    || _atmosphere.IsTileAirBlocked(gridUid, to, dir.GetOpposite(), gridComp);
 
-                    // by using maxRegionSize for blocked edges, we ensure that a path without any such edges is
-                    // always preferred to one with 1, that path is always preferred to one with 2, and so forth.
-                    return isBlocked ? maxRegionSize : 1f;
+                    return isBlocked ? 0f : 1f;
                 },
             });
 
@@ -375,6 +380,11 @@ namespace Content.Server.Power.EntitySystems
             return _map.TryGetTile(grid, frontTile, out var mapTile) && !mapTile.IsEmpty
                 ? frontTile
                 : tile;
+        }
+
+        private bool IsMapInitialized(EntityUid uid)
+        {
+            return MetaData(uid).EntityLifeStage >= EntityLifeStage.MapInitialized;
         }
 
         #endregion
