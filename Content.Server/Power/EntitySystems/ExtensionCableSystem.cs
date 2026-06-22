@@ -5,8 +5,6 @@ using Content.Server.Power.Components;
 using Content.Shared.Atmos;
 using Content.Shared.Wall;
 using Robust.Shared.Map.Components;
-using Robust.Shared.Physics;
-using Robust.Shared.Physics.Components;
 
 using static Content.Server.NPC.Pathfinding.PathfindingSystem;
 
@@ -16,9 +14,12 @@ namespace Content.Server.Power.EntitySystems
     {
         [Dependency] private AtmosphereSystem _atmosphere = default!;
         [Dependency] private SharedMapSystem _map = default!;
-        [Dependency] private EntityQuery<ExtensionCableProviderComponent> _cableProviderQuery;
-        [Dependency] private EntityQuery<WallMountComponent> _wallMountQuery;
         [Dependency] private EntityQuery<ApcComponent> _apcQuery;
+        [Dependency] private EntityQuery<ExtensionCableProviderComponent> _cableProviderQuery;
+        [Dependency] private EntityQuery<ExtensionCableReceiverComponent> _cableReceiverQuery;
+        [Dependency] private EntityQuery<MapGridComponent> _mapGridQuery;
+        [Dependency] private EntityQuery<TransformComponent> _xformQuery;
+        [Dependency] private EntityQuery<WallMountComponent> _wallMountQuery;
 
         public override void Initialize()
         {
@@ -59,7 +60,7 @@ namespace Content.Server.Power.EntitySystems
             var xform = Transform(provider);
 
             // If grid deleting no need to update power.
-            if (HasComp<MapGridComponent>(xform.GridUid) &&
+            if (_mapGridQuery.HasComp(xform.GridUid) &&
                 MetaData(xform.GridUid.Value).EntityLifeStage > EntityLifeStage.MapInitialized)
             {
                 return;
@@ -134,9 +135,9 @@ namespace Content.Server.Power.EntitySystems
 
         private IEnumerable<Entity<ExtensionCableReceiverComponent>> FindNearbyUnconnectedReceivers(Entity<ExtensionCableProviderComponent> provider)
         {
-            if (!TryComp(provider.Owner, out TransformComponent? xform)
+            if (!_xformQuery.TryComp(provider.Owner, out var xform)
                 || xform.GridUid is not { } gridUid
-                || !TryComp(gridUid, out MapGridComponent? gridComp))
+                || !_mapGridQuery.TryComp(gridUid, out var gridComp))
             {
                 yield break;
             }
@@ -156,7 +157,7 @@ namespace Content.Server.Power.EntitySystems
                 if (EntityManager.IsQueuedForDeletion(entity) || MetaData(entity).EntityLifeStage > EntityLifeStage.MapInitialized)
                     continue;
 
-                if (!TryComp(entity, out ExtensionCableReceiverComponent? receiver))
+                if (!_cableReceiverQuery.TryComp(entity, out var receiver))
                     continue;
 
                 if (!receiver.Connectable || receiver.Provider != null)
@@ -191,12 +192,10 @@ namespace Content.Server.Power.EntitySystems
 
         private void OnReceiverStarted(Entity<ExtensionCableReceiverComponent> receiver, ref MapInitEvent args)
         {
-            if (TryComp(receiver.Owner, out PhysicsComponent? physicsComponent))
-            {
-                receiver.Comp.Connectable = physicsComponent.BodyType == BodyType.Static;
-            }
+            if (!_xformQuery.TryComp(receiver.Owner, out var xform) || !xform.Anchored)
+                return;
 
-            TryFindAndSetProvider(receiver);
+            Connect(receiver);
         }
 
         private void OnReceiverShutdown(Entity<ExtensionCableReceiverComponent> receiver, ref ComponentShutdown args)
