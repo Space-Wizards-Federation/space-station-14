@@ -1,15 +1,26 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using Content.Server.Atmos.EntitySystems;
 using Content.Server.Power.Components;
+using Content.Shared.Atmos;
+using Content.Shared.Atmos.Components;
+using Content.Shared.Wall;
 using Robust.Shared.Map.Components;
 using Robust.Shared.Physics;
 using Robust.Shared.Physics.Components;
+
+using static Content.Server.NPC.Pathfinding.PathfindingSystem;
 
 namespace Content.Server.Power.EntitySystems
 {
     public sealed partial class ExtensionCableSystem : EntitySystem
     {
+        [Dependency] private AtmosphereSystem _atmosphere = default!;
         [Dependency] private SharedMapSystem _map = default!;
-        [Dependency] private EntityQuery<ExtensionCableProviderComponent> _cableProviderQuery = default!;
+        [Dependency] private EntityQuery<ExtensionCableProviderComponent> _cableProviderQuery;
+        [Dependency] private EntityQuery<GridAtmosphereComponent> _gridAtmosQuery;
+        [Dependency] private EntityQuery<WallMountComponent> _wallMountQuery;
+        [Dependency] private EntityQuery<ApcComponent> _apcQuery;
 
         public override void Initialize()
         {
@@ -73,7 +84,6 @@ namespace Content.Server.Power.EntitySystems
 
             foreach (var receiver in FindAvailableReceivers(provider.Owner, provider.Comp.TransferRange))
             {
-                receiver.Comp.Provider?.Comp.LinkedReceivers.Remove(receiver);
                 receiver.Comp.Provider = provider;
                 provider.Comp.LinkedReceivers.Add(receiver);
                 RaiseLocalEvent(receiver, new ProviderConnectedEvent(provider), broadcast: false);
@@ -246,19 +256,30 @@ namespace Content.Server.Power.EntitySystems
             RaiseLocalEvent(provider.Value, new ReceiverConnectedEvent((uid, receiver)), broadcast: false);
         }
 
-        private bool TryFindAvailableProvider(EntityUid owner, float range, [NotNullWhen(true)] out Entity<ExtensionCableProviderComponent>? foundProvider, TransformComponent? xform = null)
+        private bool TryFindAvailableProvider(
+            EntityUid owner,
+            int range,
+            [NotNullWhen(true)] out Entity<ExtensionCableProviderComponent>? foundProvider,
+            TransformComponent? xform = null)
         {
-            if (!Resolve(owner, ref xform) || !TryComp(xform.GridUid, out MapGridComponent? grid))
+            if (!Resolve(owner, ref xform)
+                || xform.GridUid is not { } gridUid
+                || !TryComp(gridUid, out MapGridComponent? gridComp))
             {
                 foundProvider = null;
                 return false;
             }
 
-            var coordinates = xform.Coordinates;
-            var nearbyEntities = _map.GetCellsInSquareArea(xform.GridUid.Value, grid, coordinates, (int)Math.Ceiling(range / grid.TileSize));
+            Entity<GridAtmosphereComponent?> gridAtmos = gridUid;
+            _gridAtmosQuery.Resolve(ref gridAtmos, logMissing: false);
 
-            Entity<ExtensionCableProviderComponent>? closestCandidate = null;
-            var closestDistanceFound = float.MaxValue;
+            Entity<MapGridComponent> grid = (gridUid, gridComp);
+
+            var start = GetCableReachabilityTile(owner, xform, grid);
+            var coordinates = _map.GridTileToLocal(gridUid, gridComp, start);
+            var nearbyEntities = _map.GetCellsInSquareArea(gridUid, gridComp, coordinates, range);
+
+            var candidates = new Dictionary<Vector2i, Entity<ExtensionCableProviderComponent>>();
             foreach (var entity in nearbyEntities)
             {
                 if (entity == owner || !_cableProviderQuery.TryGetComponent(entity, out var provider) || !provider.Connectable)
@@ -273,23 +294,88 @@ namespace Content.Server.Power.EntitySystems
                 // Find the closest provider
                 if (!TryComp(entity, out TransformComponent? entityXform))
                     continue;
-                var distance = (entityXform.LocalPosition - xform.LocalPosition).Length();
-                if (distance >= closestDistanceFound)
+
+                var gridPos = GetCableReachabilityTile(entity, entityXform, grid);
+                var providerRange = Math.Min(range, provider.TransferRange);
+                var pd = gridPos - start;
+
+                // ensure in range bidirectionally
+                if (pd.X * pd.X + pd.Y * pd.Y > providerRange * providerRange)
                     continue;
 
-                closestCandidate = (entity, provider);
-                closestDistanceFound = distance;
+                if (!candidates.TryGetValue(gridPos, out var existing)
+                    || (!_apcQuery.HasComp(existing.Owner) && _apcQuery.HasComp(entity)))
+                {
+                    candidates[gridPos] = (entity, provider);
+                }
             }
 
-            // Make sure the provider is in range before claiming success
-            if (closestCandidate != null && closestDistanceFound <= Math.Min(range, closestCandidate.Value.Comp.TransferRange))
+            if (candidates.Count == 0)
             {
-                foundProvider = closestCandidate;
+                foundProvider = null;
+                return false;
+            }
+
+            var sqRange = range * range;
+            // this number is the number of tiles in the Chebyshev region defined by the range. This is also the number
+            // of tiles in GetCellsInSquareArea invoked above.
+            var maxRegionSize = (2 * range + 1) * (2 * range + 1);
+
+            var result = GetBreadthPath(new BreadthPathArgs
+            {
+                Start = start,
+                Ends = candidates.Keys.ToList(),
+                Diagonals = false,
+                Limit = maxRegionSize,
+                EdgeMultiplier = (from, to) =>
+                {
+                    if (!_map.TryGetTile(grid, to, out var toTile) || toTile.IsEmpty)
+                        return 0f;
+
+                    // enforce range limit
+                    var delta = to - start;
+                    if (delta.X * delta.X + delta.Y * delta.Y > sqRange)
+                        return 0f;
+
+                    var dir = (to - from).GetCardinalDir().ToAtmosDirection();
+                    var isBlocked = _atmosphere.IsTileAirBlockedCached(gridAtmos, from, dir)
+                                    || _atmosphere.IsTileAirBlockedCached(gridAtmos, to, dir.GetOpposite());
+
+                    // by using maxRegionSize for blocked edges, we ensure that a path without any such edges is
+                    // always preferred to one with 1, that path is always preferred to one with 2, and so forth.
+                    return isBlocked ? maxRegionSize : 1f;
+                },
+            });
+
+            if (result.Path is { Count: > 0 })
+            {
+                foundProvider = candidates[result.Path[^1]];
                 return true;
             }
 
             foundProvider = null;
             return false;
+        }
+
+        /// <summary>
+        /// Adjust cable pathing tile to account for wall mount devices
+        /// </summary>
+        private Vector2i GetCableReachabilityTile(
+            EntityUid uid,
+            TransformComponent xform,
+            Entity<MapGridComponent> grid)
+        {
+            var tile = _map.TileIndicesFor(grid, xform.Coordinates);
+
+            if (!_wallMountQuery.TryComp(uid, out var wallMount))
+                return tile;
+
+            var dir = (wallMount.Direction + xform.LocalRotation).GetCardinalDir();
+            var frontTile = tile.Offset(dir);
+
+            return _map.TryGetTile(grid, frontTile, out var mapTile) && !mapTile.IsEmpty
+                ? frontTile
+                : tile;
         }
 
         #endregion

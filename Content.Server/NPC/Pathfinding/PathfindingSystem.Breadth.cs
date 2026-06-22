@@ -27,7 +27,7 @@ public sealed partial class PathfindingSystem
     /// <summary>
     /// Gets the lowest-cost tile path from start to any end.
     /// </summary>
-    public SimplePathResult GetBreadthPath(BreadthPathArgs args)
+    public static SimplePathResult GetBreadthPath(BreadthPathArgs args)
     {
         var cameFrom = new Dictionary<Vector2i, Vector2i>();
         var costSoFar = new Dictionary<Vector2i, float>();
