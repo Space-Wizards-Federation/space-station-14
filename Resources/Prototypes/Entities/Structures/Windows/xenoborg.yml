@@ -1,7 +1,6 @@
 - type: entity
   parent: ReinforcedWindow
   id: XenoborgWindow
-  parent: PlastitaniumWindow
   name: xenoborg window
   components:
   - type: Sprite
