@@ -1,4 +1,3 @@
-using System.Globalization;
 using Content.Server.Chat.Managers;
 using Content.Server.Chat.Systems;
 using Content.Server.Ghost;
@@ -13,6 +12,7 @@ using Content.Shared.Access.Systems;
 using Content.Shared.Bed.Cryostorage;
 using Content.Shared.Chat;
 using Content.Shared.Climbing.Systems;
+using Content.Shared.Clothing.Components;
 using Content.Shared.Database;
 using Content.Shared.GameTicking;
 using Content.Shared.Hands.Components;
@@ -27,6 +27,7 @@ using Robust.Shared.Containers;
 using Robust.Shared.Enums;
 using Robust.Shared.Network;
 using Robust.Shared.Player;
+using System.Globalization;
 
 namespace Content.Server.Bed.Cryostorage;
 
@@ -314,12 +315,15 @@ public sealed partial class CryostorageSystem : SharedCryostorageSystem
         var enumerator = _inventory.GetSlotEnumerator(uid);
         while (enumerator.NextItem(out var item, out var slotDef))
         {
+            if (HasComp<AttachedClothingComponent>(item))
+                continue;
+
             data.ItemSlots.Add(slotDef.Name, Name(item));
         }
 
         foreach (var hand in _hands.EnumerateHands(uid))
         {
-            if (!_hands.TryGetHeldItem(uid, hand, out var heldEntity))
+            if (!_hands.TryGetHeldItem(uid, hand, out var heldEntity, true))
                 continue;
 
             data.HeldItems.Add(hand, Name(heldEntity.Value));
