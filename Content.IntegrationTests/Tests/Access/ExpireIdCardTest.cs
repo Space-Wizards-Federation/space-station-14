@@ -1,13 +1,13 @@
 #nullable enable
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
+using Content.Shared.Access;
 using Content.Shared.Access.Components;
 using Content.Shared.Access.Systems;
+using Robust.Shared.GameObjects;
 using Robust.Shared.Localization;
-using Content.Shared.Access;
 using Robust.Shared.Prototypes;
 using System.Collections.Generic;
-using Robust.Shared.GameObjects;
 
 namespace Content.IntegrationTests.Tests.Access
 {
@@ -15,6 +15,8 @@ namespace Content.IntegrationTests.Tests.Access
     public sealed class ExpireIdCardTest : GameTest
     {
         private const string TestExpireIdCard = "TestExpireIdCard";
+        private static readonly ProtoId<AccessLevelPrototype> GenpopEnter = new("GenpopEnter");
+        private static readonly ProtoId<AccessLevelPrototype> GenpopLeave = new("GenpopLeave");
 
         [TestPrototypes]
         private const string Prototypes = $@"
@@ -50,42 +52,42 @@ namespace Content.IntegrationTests.Tests.Access
             });
 
             // Check that default component values are all correct
-            Assert.Multiple(() =>
+            using (Assert.EnterMultipleScope())
             {
                 Assert.That(expireComp.Expired, Is.False);
                 Assert.That(expireComp.Permanent, Is.False);
                 Assert.That(expireComp.ExpireTime, Is.EqualTo(TimeSpan.Zero));
-                Assert.That(accessComp.Tags, Is.EqualTo(new HashSet<ProtoId<AccessLevelPrototype>> { new("GenpopEnter") }));
-                Assert.That(expireComp.ExpiredAccess, Is.EqualTo(new HashSet<ProtoId<AccessLevelPrototype>> { new("GenpopLeave") }));
+                Assert.That(accessComp.Tags, Is.EqualTo(new HashSet<ProtoId<AccessLevelPrototype>> { GenpopEnter }));
+                Assert.That(expireComp.ExpiredAccess, Is.EqualTo(new HashSet<ProtoId<AccessLevelPrototype>> { GenpopLeave }));
                 Assert.That(expireComp.ExpireMessage, Is.EqualTo(new LocId("genpop-prisoner-id-expire")));
-            });
+            }
 
             // Set the expire time to the future
             _sharedIdCardSystem.SetExpireTime(ent, expireTime);
-            Assert.Multiple(() =>
+            using (Assert.EnterMultipleScope())
             {
                 Assert.That(expireComp.Expired, Is.False);
                 Assert.That(expireComp.Permanent, Is.False);
                 Assert.That(expireComp.ExpireTime, Is.EqualTo(expireTime));
-                Assert.That(accessComp.Tags, Is.EqualTo(new HashSet<ProtoId<AccessLevelPrototype>> { new("GenpopEnter") }));
-            });
+                Assert.That(accessComp.Tags, Is.EqualTo(new HashSet<ProtoId<AccessLevelPrototype>> { GenpopEnter }));
+            }
 
             // Ensure that after just before expiry, the card has not yet expired and the access has not been replaced
             await Pair.RunSeconds(1.0f);
-            Assert.Multiple(() =>
+            using (Assert.EnterMultipleScope())
             {
                 Assert.That(expireComp.Expired, Is.False);
-                Assert.That(accessComp.Tags, Is.EqualTo(new HashSet<ProtoId<AccessLevelPrototype>> { new("GenpopEnter") }));
-            });
+                Assert.That(accessComp.Tags, Is.EqualTo(new HashSet<ProtoId<AccessLevelPrototype>> { GenpopEnter }));
+            }
 
             // Ensure that after expiry, the card has expired and the access has been replaced
             await Pair.RunSeconds(1.0f);
-            Assert.Multiple(() =>
+            using (Assert.EnterMultipleScope())
             {
                 Assert.That(expireComp.Expired, Is.True);
                 Assert.That(expireComp.Permanent, Is.False);
-                Assert.That(accessComp.Tags, Is.EqualTo(new HashSet<ProtoId<AccessLevelPrototype>> { new("GenpopLeave") }));
-            });
+                Assert.That(accessComp.Tags, Is.EqualTo(new HashSet<ProtoId<AccessLevelPrototype>> { GenpopLeave }));
+            }
         }
     }
 }
