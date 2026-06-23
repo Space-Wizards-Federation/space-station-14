@@ -21,11 +21,3 @@
   targetNode: shoes
   category: construction-category-misc
   objectType: Item
-
-- type: construction
-  id: UnsatisfactoryHat
-  graph: UnsatisfactoryHat
-  startNode: start
-  targetNode: hat
-  category: construction-category-misc
-  objectType: Item

@@ -83,17 +83,3 @@
         doAfter: 5
   - node: shoes
     entity: MoproachShoes
-
-- type: constructionGraph
-  id: UnsatisfactoryHat
-  start: start
-  graph:
-  - node: start
-    edges:
-    - to: hat
-      steps:
-      - material: Plastic
-        amount: 1
-        doAfter: 5
-  - node: hat
-    entity: ClothingHeadHatUnsatisfactory
