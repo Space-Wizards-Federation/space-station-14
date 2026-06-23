@@ -417,7 +417,7 @@ public abstract partial class SharedHandsSystem
     /// <returns>The UID of the held item, or null if the hand is empty, the hand ID is invalid, or the entity has no hands.</returns>
     public EntityUid? GetHeldItem(Entity<HandsComponent?> ent, string? handId, bool hideVirtualItems = false)
     {
-        TryGetHeldItem(ent, handId, out var held, hideVirtualItems  );
+        TryGetHeldItem(ent, handId, out var held, hideVirtualItems);
         return held;
     }
 
@@ -444,7 +444,7 @@ public abstract partial class SharedHandsSystem
 
         held = container.ContainedEntities.FirstOrNull();
 
-        if (hideVirtualItems && TryComp(held, out VirtualItemComponent? @virtual))
+        if (hideVirtualItems && HasComp<VirtualItemComponent>(held)
             held = null;
 
         return held != null;
