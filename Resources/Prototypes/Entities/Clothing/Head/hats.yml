@@ -1547,3 +1547,18 @@
     sprite: Clothing/Head/Hats/mitre_clown.rsi
   - type: Clothing
     sprite: Clothing/Head/Hats/mitre_clown.rsi
+
+- type: entity
+  parent: ClothingHeadBase
+  id: ClothingHeadHatUnsatisfactory
+  name: unsatisfactory hat
+  description: This is really uncomfortable.
+  components:
+  - type: Sprite
+    sprite: Clothing/Head/Hats/unsatisfactory.rsi
+  - type: Clothing
+    sprite: Clothing/Head/Hats/unsatisfactory.rsi
+  - type: Construction
+    graph: UnsatisfactoryHat
+    node: start
+    deconstructionTarget: null
