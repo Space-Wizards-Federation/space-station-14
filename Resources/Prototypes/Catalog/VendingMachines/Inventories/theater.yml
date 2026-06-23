@@ -58,6 +58,7 @@
     ClothingShoesBootsCowboyWhite: 1
     ClothingHeadHatWizardFake: 1
     ClothingOuterWizardFake: 1
+    ClothingHeadHatUnsatisfactory: 5 # It's a quintet, in case you're wondering.
   contrabandInventory:
     ClothingHeadHatRichard: 1
     ToyFigurineBoxer: 1
