@@ -46,8 +46,6 @@ public abstract partial class AtmosTest : GameTest
     protected virtual float Moles => 1000.0f;
 
     // 5% is a lot, but it can get this bad ATM...
-    // roomba here: it got worse somehow and actually gets even more worse for every tick, at least for LINDA.
-    // current benchmarks show error at f(x)=1000-1.428718x-0.0633944x^2 where x is the tick count up to 19 ticks.
     protected virtual float Tolerance => 0.05f;
 
     [SetUp]
