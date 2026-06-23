@@ -444,7 +444,7 @@ public abstract partial class SharedHandsSystem
 
         held = container.ContainedEntities.FirstOrNull();
 
-        if (hideVirtualItems && HasComp<VirtualItemComponent>(held)
+        if (hideVirtualItems && HasComp<VirtualItemComponent>(held))
             held = null;
 
         return held != null;
