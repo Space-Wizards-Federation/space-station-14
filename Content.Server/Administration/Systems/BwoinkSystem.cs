@@ -629,11 +629,77 @@ namespace Content.Server.Administration.Systems
             }
         }
 
-        protected override void OnBwoinkTextMessage(BwoinkTextMessage message, EntitySessionEventArgs eventArgs)
+        private string FormatName(AdminData? senderAdmin, ICommonSession senderSession, string prefix, string name)
         {
-            base.OnBwoinkTextMessage(message, eventArgs);
+            if (senderAdmin is not null &&
+                senderAdmin.Flags ==
+                AdminFlags.Adminhelp) // Mentor. Not full admin. That's why it's colored differently.
+            {
+                return $"[color=purple]{prefix}{name}[/color]";
+            }
+            else if (senderAdmin is not null && senderAdmin.HasFlag(AdminFlags.Adminhelp))
+            {
+                return $"[color=red]{prefix}{name}[/color]";
+            }
+            else
+            {
+                return $"{senderSession.Name}"; // Not an admin, name is not overridden.
+            }
+        }
+
+        private async Task<BwoinkTextMessage> FormatFullMessageForRecipient(
+            bool forAdmin,
+            AdminData? senderAdmin,
+            ICommonSession senderSession,
+            BwoinkTextMessage input)
+        {
+            var senderAHelpAdmin = senderAdmin?.HasFlag(AdminFlags.Adminhelp) ?? false;
+            string messageText;
+
+            if (forAdmin)
+            {
+                messageText = await GenerateNameLinks(input.Text);
+            }
+            else
+            {
+                messageText = FormattedMessage.EscapeText(input.Text);
+            }
+
+            var adminPrefix = "";
+            if (_config.GetCVar(CCVars.AhelpAdminPrefix) && senderAdmin?.Title != null)
+                adminPrefix = $"[bold]\\[{FormattedMessage.EscapeText(senderAdmin.Title)}\\][/bold] ";
+
+            var bwoinkText = FormatName(
+                senderAdmin,
+                senderSession,
+                adminPrefix,
+                forAdmin || _overrideClientName == string.Empty ? senderSession.Name : _overrideClientName);
+
+            var statusPrefix = "";
+            if (input.AdminOnly)
+                statusPrefix = Loc.GetString("bwoink-message-admin-only");
+            else if (!input.PlaySound)
+                statusPrefix = Loc.GetString("bwoink-message-silent");
+
+            bwoinkText = $"{statusPrefix} {bwoinkText}: {messageText}";
+
+            // If it's not an admin / admin chooses to keep the sound and message is not an admin only message, then play it.
+            var playSound = (!senderAHelpAdmin || input.PlaySound) && !input.AdminOnly;
+            return new BwoinkTextMessage(
+                input.UserId,
+                senderSession.UserId,
+                bwoinkText,
+                playSound: playSound,
+                adminOnly: input.AdminOnly);
+        }
+
+        private async Task SendAHelpFromSession(
+            ICommonSession senderSession,
+            BwoinkTextMessage message,
+            bool checkAuthorization,
+            bool applyRateLimit)
+        {
             _activeConversations[message.UserId] = DateTime.Now;
-            var senderSession = eventArgs.SenderSession;
 
             // TODO: Sanitize text?
             // Confirm that this person is actually allowed to send a message here.
@@ -641,13 +707,13 @@ namespace Content.Server.Administration.Systems
             var senderAdmin = _adminManager.GetAdminData(senderSession);
             var senderAHelpAdmin = senderAdmin?.HasFlag(AdminFlags.Adminhelp) ?? false;
             var authorized = personalChannel && !message.AdminOnly || senderAHelpAdmin;
-            if (!authorized)
+            if (checkAuthorization && !authorized)
             {
                 // Unauthorized bwoink (log?)
                 return;
             }
 
-            if (_rateLimit.CountAction(eventArgs.SenderSession, RateLimitKey) != RateLimitStatus.Allowed)
+            if (applyRateLimit && _rateLimit.CountAction(senderSession, RateLimitKey) != RateLimitStatus.Allowed)
                 return;
 
             var escapedText = FormattedMessage.EscapeText(message.Text);
@@ -772,6 +838,29 @@ namespace Content.Server.Administration.Systems
             var systemText = Loc.GetString("bwoink-system-starmute-message-no-other-users");
             var starMuteMsg = new BwoinkTextMessage(message.UserId, SystemUserId, systemText);
             RaiseNetworkEvent(starMuteMsg, senderSession.Channel);
+        }
+
+        protected override async void OnBwoinkTextMessage(BwoinkTextMessage message, EntitySessionEventArgs eventArgs)
+        {
+            base.OnBwoinkTextMessage(message, eventArgs);
+            await SendAHelpFromSession(eventArgs.SenderSession, message, true, true);
+
+        }
+
+        public async void SendAutomatedPlayerAHelp(ICommonSession playerSession, string text)
+        {
+            var message = new BwoinkTextMessage(
+                userId: playerSession.UserId,
+                trueSender: playerSession.UserId,
+                text: text,
+                playSound: true,
+                adminOnly: true);
+
+            await SendAHelpFromSession(
+                senderSession: playerSession,
+                message: message,
+                checkAuthorization: false,
+                applyRateLimit: false);
         }
 
         private IList<INetChannel> GetNonAfkAdmins()
