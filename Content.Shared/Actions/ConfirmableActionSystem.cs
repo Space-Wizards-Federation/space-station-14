@@ -17,7 +17,7 @@ public sealed partial class ConfirmableActionSystem : EntitySystem
     {
         base.Initialize();
 
-        SubscribeLocalEvent<ConfirmableActionComponent, ActionAttemptEvent>(OnAttempt);
+        SubscribeLocalEvent<ConfirmableActionComponent, ActionAttemptEvent>(OnAttempt, after:[typeof(PacifismDisabledSystem)]);
     }
 
     public override void Update(float frameTime)

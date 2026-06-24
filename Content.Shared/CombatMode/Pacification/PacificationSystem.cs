@@ -19,6 +19,7 @@ public sealed partial class PacificationSystem : EntitySystem
     [Dependency] private SharedCombatModeSystem _combatSystem = default!;
     [Dependency] private SharedPopupSystem _popup = default!;
     [Dependency] private IGameTiming _timing = default!;
+    [Dependency] private EntityQuery<PacifiedComponent> _pacifiedQuery = default!;
 
     public override void Initialize()
     {
@@ -156,6 +157,21 @@ public sealed partial class PacificationSystem : EntitySystem
         args.Cancelled = true;
         args.Reason = "pacified-cannot-harm-indirect";
     }
+
+    /// <summary>
+    /// Checks if an entity is pacified
+    /// </summary>
+    /// <param name="uid"></param>
+    /// <returns></returns>
+    public bool IsPacified(EntityUid uid)
+    {
+        //check for pacify component
+        if (!_pacifiedQuery.HasComp(uid))
+            return false;
+        // Insert Optional additional checks
+        return true;
+    }
+
 }
 
 
