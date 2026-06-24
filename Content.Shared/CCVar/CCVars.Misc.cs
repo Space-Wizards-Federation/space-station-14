@@ -1,4 +1,5 @@
-﻿using Robust.Shared.Configuration;
+﻿using Content.Shared.Arcade.Components;
+using Robust.Shared.Configuration;
 
 namespace Content.Shared.CCVar;
 
@@ -109,4 +110,11 @@ public sealed partial class CCVars
     /// </summary>
     public static readonly CVarDef<float> PlaytimeMinutesToday =
         CVarDef.Create("playtime.minutes_today", 0f, CVar.CLIENTONLY | CVar.ARCHIVE);
+
+    /// <summary>
+    ///     The fallback maximum number of high score entries for <see cref="ArcadeScoreboardPrototype"/>s
+    ///     and <see cref="ArcadeScoreboardComponent"/>s that do not have them defined.
+    /// </summary>
+    public static readonly CVarDef<int> FallbackScoreboardEntriesCount =
+        CVarDef.Create("arcade.fallback_scoreboard_entries", 5, CVar.SERVERONLY);
 }
