@@ -1,24 +1,34 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
+using Content.Server.Atmos.EntitySystems;
 using Content.Server.Power.Components;
+using Content.Shared.Atmos;
+using Content.Shared.Wall;
 using Robust.Shared.Map.Components;
-using Robust.Shared.Physics;
-using Robust.Shared.Physics.Components;
+
+using static Content.Server.NPC.Pathfinding.PathfindingSystem;
 
 namespace Content.Server.Power.EntitySystems
 {
     public sealed partial class ExtensionCableSystem : EntitySystem
     {
+        [Dependency] private AtmosphereSystem _atmosphere = default!;
         [Dependency] private SharedMapSystem _map = default!;
-        [Dependency] private EntityQuery<ExtensionCableProviderComponent> _cableProviderQuery = default!;
+        [Dependency] private EntityQuery<ApcComponent> _apcQuery;
+        [Dependency] private EntityQuery<ExtensionCableProviderComponent> _cableProviderQuery;
+        [Dependency] private EntityQuery<ExtensionCableReceiverComponent> _cableReceiverQuery;
+        [Dependency] private EntityQuery<MapGridComponent> _mapGridQuery;
+        [Dependency] private EntityQuery<TransformComponent> _xformQuery;
+        [Dependency] private EntityQuery<WallMountComponent> _wallMountQuery;
 
         public override void Initialize()
         {
             base.Initialize();
 
             //Lifecycle events
-            SubscribeLocalEvent<ExtensionCableProviderComponent, ComponentStartup>(OnProviderStarted);
+            SubscribeLocalEvent<ExtensionCableProviderComponent, MapInitEvent>(OnProviderStarted);
             SubscribeLocalEvent<ExtensionCableProviderComponent, ComponentShutdown>(OnProviderShutdown);
-            SubscribeLocalEvent<ExtensionCableReceiverComponent, ComponentStartup>(OnReceiverStarted);
+            SubscribeLocalEvent<ExtensionCableReceiverComponent, MapInitEvent>(OnReceiverStarted);
             SubscribeLocalEvent<ExtensionCableReceiverComponent, ComponentShutdown>(OnReceiverShutdown);
 
             //Anchoring
@@ -40,7 +50,7 @@ namespace Content.Server.Power.EntitySystems
             ResetReceivers((uid, provider));
         }
 
-        private void OnProviderStarted(Entity<ExtensionCableProviderComponent> provider, ref ComponentStartup args)
+        private void OnProviderStarted(Entity<ExtensionCableProviderComponent> provider, ref MapInitEvent args)
         {
             Connect(provider);
         }
@@ -50,7 +60,7 @@ namespace Content.Server.Power.EntitySystems
             var xform = Transform(provider);
 
             // If grid deleting no need to update power.
-            if (HasComp<MapGridComponent>(xform.GridUid) &&
+            if (_mapGridQuery.HasComp(xform.GridUid) &&
                 MetaData(xform.GridUid.Value).EntityLifeStage > EntityLifeStage.MapInitialized)
             {
                 return;
@@ -61,6 +71,9 @@ namespace Content.Server.Power.EntitySystems
 
         private void OnProviderAnchorStateChanged(Entity<ExtensionCableProviderComponent> provider, ref AnchorStateChangedEvent args)
         {
+            if (!IsMapInitialized(provider.Owner))
+                return;
+
             if (args.Anchored)
                 Connect(provider);
             else
@@ -71,13 +84,9 @@ namespace Content.Server.Power.EntitySystems
         {
             provider.Comp.Connectable = true;
 
-            foreach (var receiver in FindAvailableReceivers(provider.Owner, provider.Comp.TransferRange))
+            foreach (var receiver in FindNearbyUnconnectedReceivers(provider))
             {
-                receiver.Comp.Provider?.Comp.LinkedReceivers.Remove(receiver);
-                receiver.Comp.Provider = provider;
-                provider.Comp.LinkedReceivers.Add(receiver);
-                RaiseLocalEvent(receiver, new ProviderConnectedEvent(provider), broadcast: false);
-                RaiseLocalEvent(provider, new ReceiverConnectedEvent(receiver), broadcast: false);
+                TryFindAndSetProvider(receiver);
             }
         }
 
@@ -90,6 +99,9 @@ namespace Content.Server.Power.EntitySystems
 
         private void OnProviderReAnchor(Entity<ExtensionCableProviderComponent> provider, ref ReAnchorEvent args)
         {
+            if (!IsMapInitialized(provider.Owner))
+                return;
+
             Disconnect(provider);
             Connect(provider);
         }
@@ -121,32 +133,37 @@ namespace Content.Server.Power.EntitySystems
             }
         }
 
-        private IEnumerable<Entity<ExtensionCableReceiverComponent>> FindAvailableReceivers(EntityUid owner, float range)
+        private IEnumerable<Entity<ExtensionCableReceiverComponent>> FindNearbyUnconnectedReceivers(Entity<ExtensionCableProviderComponent> provider)
         {
-            var xform = Transform(owner);
-            var coordinates = xform.Coordinates;
-
-            if (!TryComp(xform.GridUid, out MapGridComponent? grid))
+            if (!_xformQuery.TryComp(provider.Owner, out var xform)
+                || xform.GridUid is not { } gridUid
+                || !_mapGridQuery.TryComp(gridUid, out var gridComp))
+            {
                 yield break;
+            }
 
-            var nearbyEntities = _map.GetCellsInSquareArea(xform.GridUid.Value, grid, coordinates, (int)Math.Ceiling(range / grid.TileSize));
+            Entity<MapGridComponent> grid = (gridUid, gridComp);
+            var tile = GetCableReachabilityTile(provider.Owner, xform, grid);
+            var coordinates = _map.GridTileToLocal(gridUid, gridComp, tile);
+
+            // Receiver wall mounts can path from the floor tile in front of them.
+            var nearbyEntities = _map.GetCellsInSquareArea(gridUid, gridComp, coordinates, provider.Comp.TransferRange + 1);
 
             foreach (var entity in nearbyEntities)
             {
-                if (entity == owner)
+                if (entity == provider.Owner)
                     continue;
 
                 if (EntityManager.IsQueuedForDeletion(entity) || MetaData(entity).EntityLifeStage > EntityLifeStage.MapInitialized)
                     continue;
 
-                if (!TryComp(entity, out ExtensionCableReceiverComponent? receiver))
+                if (!_cableReceiverQuery.TryComp(entity, out var receiver))
                     continue;
 
                 if (!receiver.Connectable || receiver.Provider != null)
                     continue;
 
-                if ((Transform(entity).LocalPosition - xform.LocalPosition).Length() <= Math.Min(range, receiver.ReceptionRange))
-                    yield return (entity, receiver);
+                yield return (entity, receiver);
             }
         }
 
@@ -173,17 +190,12 @@ namespace Content.Server.Power.EntitySystems
             TryFindAndSetProvider((uid, receiver));
         }
 
-        private void OnReceiverStarted(Entity<ExtensionCableReceiverComponent> receiver, ref ComponentStartup args)
+        private void OnReceiverStarted(Entity<ExtensionCableReceiverComponent> receiver, ref MapInitEvent args)
         {
-            if (TryComp(receiver.Owner, out PhysicsComponent? physicsComponent))
-            {
-                receiver.Comp.Connectable = physicsComponent.BodyType == BodyType.Static;
-            }
+            if (!_xformQuery.TryComp(receiver.Owner, out var xform) || !xform.Anchored)
+                return;
 
-            if (receiver.Comp.Provider == null)
-            {
-                TryFindAndSetProvider(receiver);
-            }
+            Connect(receiver);
         }
 
         private void OnReceiverShutdown(Entity<ExtensionCableReceiverComponent> receiver, ref ComponentShutdown args)
@@ -193,6 +205,9 @@ namespace Content.Server.Power.EntitySystems
 
         private void OnReceiverAnchorStateChanged(Entity<ExtensionCableReceiverComponent> receiver, ref AnchorStateChangedEvent args)
         {
+            if (!IsMapInitialized(receiver.Owner))
+                return;
+
             if (args.Anchored)
             {
                 Connect(receiver);
@@ -205,6 +220,9 @@ namespace Content.Server.Power.EntitySystems
 
         private void OnReceiverReAnchor(Entity<ExtensionCableReceiverComponent> receiver, ref ReAnchorEvent args)
         {
+            if (!IsMapInitialized(receiver.Owner))
+                return;
+
             Disconnect(receiver);
             Connect(receiver);
         }
@@ -212,10 +230,7 @@ namespace Content.Server.Power.EntitySystems
         private void Connect(Entity<ExtensionCableReceiverComponent> receiver)
         {
             receiver.Comp.Connectable = true;
-            if (receiver.Comp.Provider == null)
-            {
-                TryFindAndSetProvider(receiver);
-            }
+            TryFindAndSetProvider(receiver);
         }
 
         private void Disconnect(Entity<ExtensionCableReceiverComponent> receiver)
@@ -233,32 +248,43 @@ namespace Content.Server.Power.EntitySystems
 
         private void TryFindAndSetProvider(Entity<ExtensionCableReceiverComponent> receiver, TransformComponent? xform = null)
         {
-            var uid = receiver.Owner;
-            if (!receiver.Comp.Connectable)
+            if (!receiver.Comp.Connectable || receiver.Comp.Provider != null)
                 return;
 
-            if (!TryFindAvailableProvider(uid, receiver.Comp.ReceptionRange, out var provider, xform))
+            if (!TryFindAvailableProvider(
+                    receiver.Owner,
+                    receiver.Comp.ReceptionRange,
+                    out var provider,
+                    xform))
                 return;
 
             receiver.Comp.Provider = provider;
             provider.Value.Comp.LinkedReceivers.Add(receiver);
-            RaiseLocalEvent(uid, new ProviderConnectedEvent(provider), broadcast: false);
-            RaiseLocalEvent(provider.Value, new ReceiverConnectedEvent((uid, receiver)), broadcast: false);
+            RaiseLocalEvent(receiver, new ProviderConnectedEvent(provider), broadcast: false);
+            RaiseLocalEvent(provider.Value, new ReceiverConnectedEvent(receiver), broadcast: false);
         }
 
-        private bool TryFindAvailableProvider(EntityUid owner, float range, [NotNullWhen(true)] out Entity<ExtensionCableProviderComponent>? foundProvider, TransformComponent? xform = null)
+        private bool TryFindAvailableProvider(
+            EntityUid owner,
+            int range,
+            [NotNullWhen(true)] out Entity<ExtensionCableProviderComponent>? foundProvider,
+            TransformComponent? xform = null)
         {
-            if (!Resolve(owner, ref xform) || !TryComp(xform.GridUid, out MapGridComponent? grid))
+            if (!Resolve(owner, ref xform)
+                || xform.GridUid is not { } gridUid
+                || !TryComp(gridUid, out MapGridComponent? gridComp))
             {
                 foundProvider = null;
                 return false;
             }
 
-            var coordinates = xform.Coordinates;
-            var nearbyEntities = _map.GetCellsInSquareArea(xform.GridUid.Value, grid, coordinates, (int)Math.Ceiling(range / grid.TileSize));
+            Entity<MapGridComponent> grid = (gridUid, gridComp);
 
-            Entity<ExtensionCableProviderComponent>? closestCandidate = null;
-            var closestDistanceFound = float.MaxValue;
+            var start = GetCableReachabilityTile(owner, xform, grid);
+            var coordinates = _map.GridTileToLocal(gridUid, gridComp, start);
+            var nearbyEntities = _map.GetCellsInSquareArea(gridUid, gridComp, coordinates, range + 1);
+
+            var candidates = new Dictionary<Vector2i, Entity<ExtensionCableProviderComponent>>();
             foreach (var entity in nearbyEntities)
             {
                 if (entity == owner || !_cableProviderQuery.TryGetComponent(entity, out var provider) || !provider.Connectable)
@@ -273,23 +299,91 @@ namespace Content.Server.Power.EntitySystems
                 // Find the closest provider
                 if (!TryComp(entity, out TransformComponent? entityXform))
                     continue;
-                var distance = (entityXform.LocalPosition - xform.LocalPosition).Length();
-                if (distance >= closestDistanceFound)
+
+                var gridPos = GetCableReachabilityTile(entity, entityXform, grid);
+                var providerRange = Math.Min(range, provider.TransferRange);
+                var pd = gridPos - start;
+
+                // ensure in range bidirectionally
+                if (pd.X * pd.X + pd.Y * pd.Y > providerRange * providerRange)
                     continue;
 
-                closestCandidate = (entity, provider);
-                closestDistanceFound = distance;
+                if (!candidates.TryGetValue(gridPos, out var existing)
+                    || (!_apcQuery.HasComp(existing.Owner) && _apcQuery.HasComp(entity)))
+                {
+                    candidates[gridPos] = (entity, provider);
+                }
             }
 
-            // Make sure the provider is in range before claiming success
-            if (closestCandidate != null && closestDistanceFound <= Math.Min(range, closestCandidate.Value.Comp.TransferRange))
+            if (candidates.Count == 0)
             {
-                foundProvider = closestCandidate;
+                foundProvider = null;
+                return false;
+            }
+
+            var sqRange = range * range;
+            // this number is the number of tiles in the Chebyshev region defined by the range. This is also the number
+            // of tiles in GetCellsInSquareArea invoked above.
+            var maxRegionSize = (2 * range + 1) * (2 * range + 1);
+
+            var result = GetBreadthPath(new BreadthPathArgs
+            {
+                Start = start,
+                Ends = candidates.Keys.ToList(),
+                Diagonals = false,
+                Limit = maxRegionSize,
+                EdgeMultiplier = (from, to) =>
+                {
+                    if (!_map.TryGetTile(grid, to, out var toTile) || toTile.IsEmpty)
+                        return 0f;
+
+                    // enforce range limit
+                    var delta = to - start;
+                    if (delta.X * delta.X + delta.Y * delta.Y > sqRange)
+                        return 0f;
+
+                    var dir = (to - from).GetCardinalDir().ToAtmosDirection();
+                    var isBlocked = _atmosphere.IsTileAirBlocked(gridUid, from, dir, gridComp)
+                                    || _atmosphere.IsTileAirBlocked(gridUid, to, dir.GetOpposite(), gridComp);
+
+                    return isBlocked ? 0f : 1f;
+                },
+            });
+
+            if (result.Path is { Count: > 0 })
+            {
+                foundProvider = candidates[result.Path[^1]];
                 return true;
             }
 
             foundProvider = null;
             return false;
+        }
+
+        /// <summary>
+        /// Adjust cable pathing tile to account for wall mount devices
+        /// </summary>
+        private Vector2i GetCableReachabilityTile(
+            EntityUid uid,
+            TransformComponent xform,
+            Entity<MapGridComponent> grid)
+        {
+            var tile = _map.TileIndicesFor(grid, xform.Coordinates);
+
+            if (!_wallMountQuery.TryComp(uid, out var wallMount))
+                return tile;
+
+            var dir = (wallMount.Direction + xform.LocalRotation).GetCardinalDir();
+            var frontTile = tile.Offset(dir);
+
+            return _map.TryGetTile(grid, frontTile, out var mapTile) && !mapTile.IsEmpty
+                ? frontTile
+                : tile;
+        }
+
+        private bool IsMapInitialized(EntityUid uid)
+        {
+            return MetaData(uid).EntityLifeStage >= EntityLifeStage.MapInitialized;
         }
 
         #endregion

@@ -133,7 +133,7 @@ public sealed partial class PathfindingSystem
         return SimplePathResult.NoPath;
     }
 
-    private List<Vector2i> ReconstructPath(Vector2i end, Dictionary<Vector2i, Vector2i> cameFrom)
+    private static List<Vector2i> ReconstructPath(Vector2i end, Dictionary<Vector2i, Vector2i> cameFrom)
     {
         var path = new List<Vector2i>()
         {
