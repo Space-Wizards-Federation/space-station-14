@@ -665,6 +665,17 @@
   placementMode: SnapgridCenter
   canBuildInImpassable: false
 
+- type: construction
+  id: GasHeatPump
+  graph: GasBinary
+  startNode: start
+  targetNode: heatpump
+  category: construction-category-atmospherics
+  placementMode: SnapgridCenter
+  canBuildInImpassable: false
+  conditions:
+  - !type:NoUnstackableInTile
+
 # ATMOS TRINARY
 - type: construction
   id: GasFilter
