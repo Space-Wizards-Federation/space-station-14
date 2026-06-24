@@ -143,7 +143,7 @@ public abstract partial class SharedStoreSystem : EntitySystem
         entity.Comp.Store = store;
     }
 
-        /// <summary>
+    /// <summary>
     /// Gets the value from an entity's currency component.
     /// Scales with stacks.
     /// </summary>

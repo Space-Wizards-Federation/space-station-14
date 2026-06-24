@@ -5,9 +5,11 @@ using Content.Shared.Changeling.Components;
 using Content.Shared.Cloning;
 using Content.Shared.Database;
 using Content.Shared.DoAfter;
+using Content.Shared.FixedPoint;
 using Content.Shared.IdentityManagement;
 using Content.Shared.Popups;
 using Content.Shared.Storage;
+using Content.Shared.Store.Components;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
 using Robust.Shared.Network;
@@ -96,6 +98,28 @@ public sealed partial class ChangelingTransformSystem : EntitySystem
         if (!_changelingIdentity.TryGetDataFromIdentity((ent.Owner, identity), targetIdentity.Value, out _))
             return; // this identity does not belong to this player
 
+        if (HasComp<ChangelingHorrorComponent>(targetIdentity))
+        {
+            // if we are trying to transform into horror form, check for DNA
+            if (TryComp<StoreComponent>(ent.Owner, out var store))
+            {
+                // the horror mode transformation will cause some slight desync but that's a problem for later
+                // since stores aren't properly networked
+                if (_net.IsClient)
+                    return;
+
+                if (store.Balance.ContainsKey("ChangelingDNA"))
+                {
+                    var k = store.Balance["ChangelingDNA"];
+                    if (k < FixedPoint2.New(1d)) // you need at least one dna point
+                    {
+                        _popup.PopupEntity(Loc.GetString("changeling-horror-transform-fail"), ent.Owner, ent.Owner, PopupType.Large);
+                        return;
+                    }
+                }
+            }
+        }
+
         TransformInto(ent.AsNullable(), targetIdentity.Value);
     }
 
@@ -114,6 +138,9 @@ public sealed partial class ChangelingTransformSystem : EntitySystem
         if (!_changelingIdentity.TryGetDataFromIdentity((ent.Owner, identity), targetIdentity.Value, out _))
             return; // this identity does not belong to this player
 
+        if (HasComp<UnremovableIdentityComponent>(targetIdentity.Value))
+            return; // can't drop the horror form
+
         _popup.PopupClient(Loc.GetString("changeling-transform-bui-drop-identity-entity-popup", ("entity", targetIdentity.Value)), ent.Owner, PopupType.Large);
         _changelingIdentity.DropStoredIdentity(ent.Owner, targetIdentity.Value);
     }
@@ -123,13 +150,18 @@ public sealed partial class ChangelingTransformSystem : EntitySystem
     /// This can be any cloneable humanoid and doesn't have to be stored in the ChangelingIdentityComponent,
     /// so make sure to validate the target before.
     /// </summary>
+    /// <remarks>
+    /// Calls <see cref="TransformIntoNow"/> after a doafter.
+    /// </remarks>
     public void TransformInto(Entity<ChangelingTransformComponent?> ent, EntityUid targetIdentity)
     {
         if (!Resolve(ent, ref ent.Comp))
             return;
 
-        var selfMessage = Loc.GetString("changeling-transform-attempt-self", ("user", Identity.Entity(ent.Owner, EntityManager)));
-        var othersMessage = Loc.GetString("changeling-transform-attempt-others", ("user", Identity.Entity(ent.Owner, EntityManager)));
+        // the horror form transforms instantly, has a different sound, plays different messages, etc
+        var isHorror = HasComp<ChangelingHorrorComponent>(targetIdentity);
+        var selfMessage = Loc.GetString( isHorror ? "changeling-transform-horror-attempt-self" : "changeling-transform-attempt-self", ("user", Identity.Entity(ent.Owner, EntityManager)));
+        var othersMessage = Loc.GetString(isHorror ? "changeling-transform-horror-attempt-others" : "changeling-transform-attempt-others", ("user", Identity.Entity(ent.Owner, EntityManager)));
         _popup.PopupPredicted(
             selfMessage,
             othersMessage,
@@ -148,10 +180,16 @@ public sealed partial class ChangelingTransformSystem : EntitySystem
         else
             _adminLogger.Add(LogType.Action, LogImpact.Medium, $"{ToPrettyString(ent.Owner):player} begun an attempt to transform into \"{Name(targetIdentity)}\"");
 
+        var time = ent.Comp.TransformWindup;
+
+        // the horror transformation is instant & spawns a screech
+        if (isHorror)
+            time = new TimeSpan(0);
+
         _doAfter.TryStartDoAfter(new DoAfterArgs(
             EntityManager,
             ent,
-            ent.Comp.TransformWindup,
+            time,
             new ChangelingTransformDoAfterEvent(),
             ent,
             target: targetIdentity)
@@ -161,31 +199,21 @@ public sealed partial class ChangelingTransformSystem : EntitySystem
             DistanceThreshold = null,
         });
     }
-
-    private void OnSuccessfulTransform(Entity<ChangelingTransformComponent> ent,
-        ref ChangelingTransformDoAfterEvent args)
+    /// <summary>
+    /// Transforms the changeling into the given identity, but without doafters or popups. Keep in mind they still need a ChangelingTransformComponent
+    /// </summary>
+    public void TransformIntoNow(Entity<ChangelingTransformComponent> ent, EntityUid targetIdentity)
     {
-        args.Handled = true;
-
-        if (args.Cancelled)
-        {
-            // Only stop the sound if we finish transforming successfully.
-            ent.Comp.CurrentTransformSound = _audio.Stop(ent.Comp.CurrentTransformSound);
-            return;
-        }
-        ent.Comp.CurrentTransformSound = null;
-
         if (!_prototype.Resolve(ent.Comp.TransformCloningSettings, out var settings))
             return;
 
-        if (args.Target is not { } targetIdentity)
-            return;
+
 
         var beforeTransformEvent = new BeforeChangelingTransformEvent(targetIdentity);
-        RaiseLocalEvent(args.User, beforeTransformEvent);
+        RaiseLocalEvent(ent.Owner, beforeTransformEvent);
 
-        _visualBody.CopyAppearanceFrom(targetIdentity, args.User);
-        _cloning.CloneComponents(targetIdentity, args.User, settings);
+        _visualBody.CopyAppearanceFrom(targetIdentity, ent.Owner);
+        _cloning.CloneComponents(targetIdentity, ent.Owner, settings);
 
         if (TryComp<ChangelingStoredIdentityComponent>(targetIdentity, out var storedIdentity) && storedIdentity.OriginalSession != null)
             _adminLogger.Add(LogType.Action, LogImpact.High, $"{ToPrettyString(ent.Owner):player} successfully transformed into \"{Name(targetIdentity)}\" ({storedIdentity.OriginalSession:player})");
@@ -204,7 +232,28 @@ public sealed partial class ChangelingTransformSystem : EntitySystem
         }
 
         var afterTransformEvent = new AfterChangelingTransformEvent(targetIdentity);
-        RaiseLocalEvent(args.User, afterTransformEvent);
+        RaiseLocalEvent(ent.Owner, afterTransformEvent);
+    }
+
+    private void OnSuccessfulTransform(Entity<ChangelingTransformComponent> ent,
+        ref ChangelingTransformDoAfterEvent args)
+    {
+        args.Handled = true;
+
+        if (args.Cancelled)
+        {
+            // Only stop the sound if we finish transforming successfully.
+            ent.Comp.CurrentTransformSound = _audio.Stop(ent.Comp.CurrentTransformSound);
+            return;
+        }
+        ent.Comp.CurrentTransformSound = null;
+
+        if (args.Target is not { } targetIdentity)
+            return;
+
+        // Calls the transformation
+        TransformIntoNow(ent, targetIdentity);
+
     }
 
     private void StorageBeforeTransform(Entity<StorageComponent> ent, ref BeforeChangelingTransformEvent args)

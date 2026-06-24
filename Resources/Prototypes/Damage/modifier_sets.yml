@@ -216,6 +216,16 @@
     Poison: 1
 
 - type: damageModifierSet
+  id: Horror
+  coefficients: # they take less damage from everything except heat
+    Blunt: 0.6
+    Piercing: 0.6
+    Cold: 0.8
+    Heat: 1.4
+    Poison: 0.4
+    Radiation: 0.8
+
+- type: damageModifierSet
   id: Zombie #Blunt resistant and immune to biological threats, but can be hacked apart and burned
   coefficients:
     Blunt: 0.6
