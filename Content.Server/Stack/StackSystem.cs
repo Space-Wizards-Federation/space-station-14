@@ -13,8 +13,6 @@ namespace Content.Server.Stack
     [UsedImplicitly]
     public sealed partial class StackSystem : SharedStackSystem
     {
-        [Dependency] private IPrototypeManager _prototypeManager = default!;
-
         #region Spawning
 
         /// <summary>
@@ -26,7 +24,7 @@ namespace Content.Server.Stack
         /// <param name="spawnPosition">Where to spawn the new stack</param>
         /// <returns>Null if StackComponent doesn't resolve, or amount to move is greater than ent has available.</returns>
         [PublicAPI]
-        public EntityUid? Split(Entity<StackComponent?> ent, int amount, EntityCoordinates spawnPosition)
+        public override EntityUid? Split(Entity<StackComponent?> ent, int amount, EntityCoordinates spawnPosition)
         {
             if (!Resolve(ent.Owner, ref ent.Comp))
                 return null;
@@ -35,11 +33,12 @@ namespace Content.Server.Stack
             if (!TryUse(ent, amount))
                 return null;
 
-            if (!_prototypeManager.Resolve(ent.Comp.StackTypeId, out var stackType))
+            if (!_prototype.Resolve(ent.Comp.StackTypeId, out var stackType))
                 return null;
 
             // Set the output parameter in the event instance to the newly split stack.
-            var newEntity = SpawnAtPosition(stackType.Spawn, spawnPosition);
+            var newEntity = PredictedSpawnAtPosition(stackType.Spawn, spawnPosition);
+            Xform.SetParent(newEntity, spawnPosition.EntityId);
 
             // There should always be a StackComponent
             var stackComp = Comp<StackComponent>(newEntity);
@@ -73,7 +72,7 @@ namespace Content.Server.Stack
         [PublicAPI]
         public EntityUid SpawnAtPosition(int count, ProtoId<StackPrototype> id, EntityCoordinates spawnPosition)
         {
-            var proto = _prototypeManager.Index(id);
+            var proto = _prototype.Index(id);
             return SpawnAtPosition(count, proto, spawnPosition);
         }
 
@@ -145,7 +144,7 @@ namespace Content.Server.Stack
                                                        int amount,
                                                        EntityCoordinates spawnPosition)
         {
-            var stackProto = _prototypeManager.Index(stackId);
+            var stackProto = _prototype.Index(stackId);
             return SpawnMultipleAtPosition(stackProto.Spawn,
                                             CalculateSpawns(stackProto, amount),
                                             spawnPosition);
@@ -167,7 +166,7 @@ namespace Content.Server.Stack
         [PublicAPI]
         public EntityUid SpawnNextToOrDrop(int amount, ProtoId<StackPrototype> id, EntityUid source)
         {
-            var proto = _prototypeManager.Index(id);
+            var proto = _prototype.Index(id);
             return SpawnNextToOrDrop(amount, proto, source);
         }
 
@@ -234,7 +233,7 @@ namespace Content.Server.Stack
                                                          int amount,
                                                          EntityUid target)
         {
-            var stackProto = _prototypeManager.Index(stackId);
+            var stackProto = _prototype.Index(stackId);
             return SpawnMultipleNextToOrDrop(stackProto.Spawn,
                                              CalculateSpawns(stackProto, amount),
                                              target);
@@ -279,28 +278,6 @@ namespace Content.Server.Stack
         }
 
         #endregion
-        #endregion
-        #region Event Handlers
-
-        /// <inheritdoc />
-        protected override void UserSplit(Entity<StackComponent> stack, Entity<TransformComponent?> user, int amount)
-        {
-            if (!Resolve(user.Owner, ref user.Comp, false))
-                return;
-
-            if (amount <= 0)
-            {
-                Popup.PopupCursor(Loc.GetString("comp-stack-split-too-small"), user.Owner, PopupType.Medium);
-                return;
-            }
-
-            if (Split(stack.AsNullable(), amount, user.Comp.Coordinates) is not { } split)
-                return;
-
-            Hands.PickupOrDrop(user.Owner, split);
-
-            Popup.PopupCursor(Loc.GetString("comp-stack-split"), user.Owner);
-        }
         #endregion
     }
 }

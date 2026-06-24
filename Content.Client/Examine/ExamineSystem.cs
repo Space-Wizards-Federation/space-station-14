@@ -162,6 +162,22 @@ namespace Content.Client.Examine
             UpdateTooltipInfo(player.Value, entity, ev.Message, ev.Verbs, getVerbs: false);
         }
 
+        public void SendExamineControl(EntityUid player, EntityUid target, Control control, bool centerAtCursor)
+        {
+            OpenTooltip(player, target, centerAtCursor);
+            AddControlToTooltip(player, target, control);
+        }
+
+        private void AddControlToTooltip(EntityUid player, EntityUid target, Control control)
+        {
+            var vBox = _examineTooltipOpen?.GetChild(0).GetChild(0);
+            if (vBox == null)
+            {
+                return;
+            }
+            vBox.AddChild(control);
+        }
+
         public override void SendExamineTooltip(EntityUid player, EntityUid target, FormattedMessage message, bool getVerbs, bool centerAtCursor)
         {
             OpenTooltip(player, target, centerAtCursor);
@@ -436,7 +452,7 @@ namespace Content.Client.Examine
                         button.OnPressed -= VerbButtonPressed;
                     }
                 }
-                _examineTooltipOpen.Dispose();
+                _examineTooltipOpen.Orphan();
                 _examineTooltipOpen = null;
             }
 

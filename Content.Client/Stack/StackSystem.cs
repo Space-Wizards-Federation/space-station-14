@@ -3,6 +3,7 @@ using Content.Client.Storage.Systems;
 using Content.Shared.Stacks;
 using JetBrains.Annotations;
 using Robust.Client.GameObjects;
+using Robust.Shared.Map;
 
 namespace Content.Client.Stack
 {
@@ -71,7 +72,7 @@ namespace Content.Client.Stack
         /// <param name="actual">The actual number of items in the stack. Altered depending on the function to run.</param>
         /// <param name="maxCount">The maximum number of items in the stack. Altered depending on the function to run.</param>
         /// <returns>True if a function was applied.</returns>
-        private bool ApplyLayerFunction(Entity<StackComponent> ent, ref int actual, ref int maxCount)
+        public bool ApplyLayerFunction(Entity<StackComponent> ent, ref int actual, ref int maxCount)
         {
             switch (ent.Comp.LayerFunction)
             {
@@ -115,5 +116,11 @@ namespace Content.Client.Stack
         }
 
         #endregion
+
+        [PublicAPI]
+        public override EntityUid? Split(Entity<StackComponent?> ent, int amount, EntityCoordinates spawnPosition)
+        {
+            return null;
+        }
     }
 }

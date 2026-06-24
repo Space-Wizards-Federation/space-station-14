@@ -1,0 +1,50 @@
+<BoxContainer
+    xmlns="https://spacestation14.io"
+    xmlns:gfx="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client"
+    HorizontalAlignment="Center"
+    HorizontalExpand="True"
+    Orientation="Vertical">
+    <BoxContainer HorizontalAlignment="Center" Orientation="Horizontal">
+        <TextureButton
+            Name="Flip"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Center"
+            Access="Public"
+            SetHeight="32"
+            SetWidth="32"
+            TexturePath="/Textures/Interface/VerbIcons/rotate_cw.svg.192dpi" />
+        <TextureButton
+            Name="Fan"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Center"
+            Access="Public"
+            SetHeight="32"
+            SetWidth="32"
+            TexturePath="/Textures/Interface/VerbIcons/fold.svg.192dpi" />
+    </BoxContainer>
+    <BoxContainer HorizontalExpand="True" HorizontalAlignment="Center" Orientation="Horizontal">
+        <TextureButton
+            Name="CycleLeft"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Center"
+            Access="Public"
+            SetHeight="16"
+            SetWidth="16"
+            TexturePath="filled_left_arrow.svg.192dpi" />
+        <BoxContainer
+            HorizontalAlignment="Center"
+            Name="SpriteHolder"
+            Access="Public"
+            HorizontalExpand="True"
+            MinSize="200 100" />
+        <TextureButton
+            Name="CycleRight"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Center"
+            Access="Public"
+            SetHeight="16"
+            SetWidth="16"
+            TexturePath="filled_right_arrow.svg.192dpi" />
+    </BoxContainer>
+
+</BoxContainer>
