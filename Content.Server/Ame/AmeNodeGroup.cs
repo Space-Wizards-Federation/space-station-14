@@ -4,6 +4,7 @@ using Content.Server.Ame.EntitySystems;
 using Content.Server.Chat.Managers;
 using Content.Server.Explosion.EntitySystems;
 using Content.Server.NodeContainer.NodeGroups;
+using Content.Shared.Ame.Components;
 using Content.Shared.NodeContainer;
 using Content.Shared.NodeContainer.NodeGroups;
 using Robust.Server.GameObjects;

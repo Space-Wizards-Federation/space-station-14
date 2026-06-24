@@ -1,3 +1,4 @@
+using Content.Shared.Wires;
 using Robust.Shared.Random;
 
 namespace Content.Server.Wires;
@@ -8,6 +9,7 @@ namespace Content.Server.Wires;
 public sealed partial class CutWireOnMapInitSystem : EntitySystem
 {
     [Dependency] private IRobustRandom _random = default!;
+    [Dependency] private EntityQuery<WiresComponent> _wiresQuery = default!;
 
     public override void Initialize()
     {
@@ -18,7 +20,7 @@ public sealed partial class CutWireOnMapInitSystem : EntitySystem
 
     private void OnMapInit(Entity<CutWireOnMapInitComponent> entity, ref MapInitEvent args)
     {
-        if (TryComp<WiresComponent>(entity, out var panel) && panel.WiresList.Count > 0)
+        if (_wiresQuery.TryComp(entity, out var panel) && panel.WiresList.Count > 0)
         {
             // Pick a random wire
             var targetWire = _random.Pick(panel.WiresList);

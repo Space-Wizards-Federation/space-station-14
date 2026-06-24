@@ -25,6 +25,10 @@ namespace Content.Client.Wires.UI
 
         private readonly Label _nameLabel;
         private readonly Label _serialLabel;
+        private readonly List<WireControl> _wireControls = new();
+        private readonly List<int> _wireIds = new();
+        private readonly List<Control> _statusControls = new();
+        private readonly List<object> _statusKeys = new();
 
         public TextureButton CloseButton { get; set; }
 
@@ -231,14 +235,61 @@ namespace Content.Client.Wires.UI
         }
 
 
-        public void Populate(WiresBoundUserInterfaceState state)
+        public void Populate(WiresComponent state)
         {
-            _nameLabel.Text = state.BoardName;
+            _nameLabel.Text = state.LocalizedBoardName;
             _serialLabel.Text = state.SerialNumber;
 
+            PopulateWireEntries(state);
+            PopulateStatusEntries(state.StatusEntries);
+        }
+
+        private void PopulateWireEntries(WiresComponent state)
+        {
+            if (WireEntriesChanged(state.ClientWires))
+                RebuildWireEntries(state);
+
+            foreach (var wire in state.ClientWires)
+            {
+                for (var i = 0; i < _wireIds.Count; i++)
+                {
+                    if (_wireIds[i] != wire.Id)
+                        continue;
+
+                    _wireControls[i].SetCut(wire.IsCut);
+                    break;
+                }
+            }
+        }
+
+        private bool WireEntriesChanged(IReadOnlyList<ClientWire> wires)
+        {
+            if (_wireControls.Count != wires.Count)
+                return true;
+
+            for (var i = 0; i < wires.Count; i++)
+            {
+                var wire = wires[i];
+
+                if (_wireIds[i] != wire.Id ||
+                    _wireControls[i].WireColor != wire.Color ||
+                    _wireControls[i].Letter != wire.Letter)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void RebuildWireEntries(WiresComponent state)
+        {
             _wiresHBox.RemoveAllChildren();
+            _wireControls.Clear();
+            _wireIds.Clear();
+
             var random = new Random(state.WireSeed);
-            foreach (var wire in state.WiresList)
+            foreach (var wire in state.ClientWires)
             {
                 var mirror = random.Next(2) == 0;
                 var flip = random.Next(2) == 0;
@@ -248,10 +299,12 @@ namespace Content.Client.Wires.UI
                     VerticalAlignment = VAlignment.Bottom
                 };
                 _wiresHBox.AddChild(control);
+                _wireControls.Add(control);
+                _wireIds.Add(wire.Id);
 
                 control.WireClicked += () =>
                 {
-                    OnAction?.Invoke(wire.Id, wire.IsCut ? WiresAction.Mend : WiresAction.Cut);
+                    OnAction?.Invoke(wire.Id, control.IsCut ? WiresAction.Mend : WiresAction.Cut);
                 };
 
                 control.ContactsClicked += () =>
@@ -259,23 +312,73 @@ namespace Content.Client.Wires.UI
                     OnAction?.Invoke(wire.Id, WiresAction.Pulse);
                 };
             }
+        }
 
-            _statusContainer.RemoveAllChildren();
+        private void PopulateStatusEntries(StatusEntry[] statusEntries)
+        {
+            if (StatusEntriesChanged(statusEntries))
+                RebuildStatusEntries(statusEntries);
 
-            foreach (var status in state.Statuses)
+            for (var i = 0; i < statusEntries.Length; i++)
+                UpdateStatusControl(_statusControls[i], statusEntries[i]);
+        }
+
+        private bool StatusEntriesChanged(StatusEntry[] statusEntries)
+        {
+            if (_statusControls.Count != statusEntries.Length)
+                return true;
+
+            for (var i = 0; i < statusEntries.Length; i++)
             {
-                if (status.Value is StatusLightData statusLightData)
-                {
-                    _statusContainer.AddChild(new StatusLight(statusLightData, _resourceCache));
-                }
-                else
-                {
-                    _statusContainer.AddChild(new Label
-                    {
-                        Text = status.ToString()
-                    });
-                }
+                var status = statusEntries[i];
+
+                if (!Equals(_statusKeys[i], status.Key))
+                    return true;
+
+                if ((status.Value is StatusLightData) != (_statusControls[i] is StatusLight))
+                    return true;
             }
+
+            return false;
+        }
+
+        private void RebuildStatusEntries(StatusEntry[] statusEntries)
+        {
+            _statusContainer.RemoveAllChildren();
+            _statusControls.Clear();
+            _statusKeys.Clear();
+
+            foreach (var status in statusEntries)
+            {
+                var control = CreateStatusControl(status);
+                _statusControls.Add(control);
+                _statusKeys.Add(status.Key);
+                _statusContainer.AddChild(control);
+            }
+        }
+
+        private Control CreateStatusControl(StatusEntry status)
+        {
+            return status.Value is StatusLightData statusLightData
+                ? new StatusLight(statusLightData, _resourceCache)
+                : new Label();
+        }
+
+        private static void UpdateStatusControl(Control control, StatusEntry status)
+        {
+            if (status.Value is StatusLightData statusLightData && control is StatusLight light)
+            {
+                light.SetData(statusLightData);
+                return;
+            }
+
+            if (control is Label label)
+            {
+                label.Text = status.ToString();
+                return;
+            }
+
+            throw new InvalidOperationException("Status entry controls must be rebuilt before updating.");
         }
 
         protected override DragMode GetDragModeFor(Vector2 relativeMousePos)
@@ -294,16 +397,23 @@ namespace Content.Client.Wires.UI
         private sealed class WireControl : Control
         {
             private IResourceCache _resourceCache;
+            private readonly WireRender _wire;
 
             private const string TextureContact = "/Textures/Interface/WireHacking/contact.svg.96dpi.png";
 
             public event Action? WireClicked;
             public event Action? ContactsClicked;
+            public WireColor WireColor { get; }
+            public WireLetter Letter { get; }
+            public bool IsCut { get; private set; }
 
             public WireControl(WireColor color, WireLetter letter, bool isCut, bool flip, bool mirror, int type,
                 IResourceCache resourceCache)
             {
                 _resourceCache = resourceCache;
+                WireColor = color;
+                Letter = letter;
+                IsCut = isCut;
 
                 HorizontalAlignment = HAlignment.Center;
                 MouseFilter = MouseFilterMode.Stop;
@@ -347,13 +457,22 @@ namespace Content.Client.Wires.UI
                 layout.AddChild(contact2);
                 LayoutContainer.SetPosition(contact2, new Vector2(0, 60));
 
-                var wire = new WireRender(color, isCut, flip, mirror, type, _resourceCache);
+                _wire = new WireRender(color, isCut, flip, mirror, type, _resourceCache);
 
-                layout.AddChild(wire);
-                LayoutContainer.SetPosition(wire, new Vector2(2, 16));
+                layout.AddChild(_wire);
+                LayoutContainer.SetPosition(_wire, new Vector2(2, 16));
 
                 ToolTip = color.Name();
                 MinSize = new Vector2(20, 102);
+            }
+
+            public void SetCut(bool isCut)
+            {
+                if (IsCut == isCut)
+                    return;
+
+                IsCut = isCut;
+                _wire.SetCut(isCut);
             }
 
             protected override void KeyBindDown(GUIBoundKeyEventArgs args)
@@ -383,7 +502,7 @@ namespace Content.Client.Wires.UI
             private sealed class WireRender : Control
             {
                 private readonly WireColor _color;
-                private readonly bool _isCut;
+                private bool _isCut;
                 private readonly bool _flip;
                 private readonly bool _mirror;
                 private readonly int _type;
@@ -419,6 +538,11 @@ namespace Content.Client.Wires.UI
                     _type = type;
 
                     SetSize = new Vector2(16, 50);
+                }
+
+                public void SetCut(bool isCut)
+                {
+                    _isCut = isCut;
                 }
 
                 protected override void Draw(DrawingHandleScreen handle)
@@ -461,6 +585,8 @@ namespace Content.Client.Wires.UI
 
         private sealed class StatusLight : Control
         {
+            private const string BlinkAnimationKey = "blink";
+
             private static readonly Animation _blinkingFast = new()
             {
                 Length = TimeSpan.FromSeconds(0.2),
@@ -501,30 +627,29 @@ namespace Content.Client.Wires.UI
                 }
             };
 
+            private readonly TextureRect _inactiveLight;
+            private readonly TextureRect _activeLight;
+            private readonly Label _label;
+            private StatusLightData? _data;
+            private StatusLightState? _animationState;
+
             public StatusLight(StatusLightData data, IResourceCache resourceCache)
             {
                 HorizontalAlignment = HAlignment.Right;
-
-                var hsv = Color.ToHsv(data.Color);
-                hsv.Z /= 2;
-                var dimColor = Color.FromHsv(hsv);
-                TextureRect activeLight;
 
                 var lightContainer = new Control
                 {
                     SetSize = new Vector2(20, 20),
                     Children =
                     {
-                        new TextureRect
+                        (_inactiveLight = new TextureRect
                         {
                             Texture = resourceCache.GetTexture(
                                 "/Textures/Interface/WireHacking/light_off_base.svg.96dpi.png"),
                             Stretch = TextureRect.StretchMode.KeepCentered,
-                            ModulateSelfOverride = dimColor
-                        },
-                        (activeLight = new TextureRect
+                        }),
+                        (_activeLight = new TextureRect
                         {
-                            ModulateSelfOverride = data.Color.WithAlpha(0.4f),
                             Stretch = TextureRect.StretchMode.KeepCentered,
                             Texture =
                                 resourceCache.GetTexture("/Textures/Interface/WireHacking/light_on_base.svg.96dpi.png"),
@@ -532,37 +657,7 @@ namespace Content.Client.Wires.UI
                     }
                 };
 
-                Animation? animation = null;
-
-                switch (data.State)
-                {
-                    case StatusLightState.Off:
-                        activeLight.Visible = false;
-                        break;
-                    case StatusLightState.On:
-                        break;
-                    case StatusLightState.BlinkingFast:
-                        animation = _blinkingFast;
-                        break;
-                    case StatusLightState.BlinkingSlow:
-                        animation = _blinkingSlow;
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-
-                if (animation != null)
-                {
-                    activeLight.PlayAnimation(animation, "blink");
-
-                    activeLight.AnimationCompleted += s =>
-                    {
-                        if (s == "blink")
-                        {
-                            activeLight.PlayAnimation(animation, s);
-                        }
-                    };
-                }
+                _activeLight.AnimationCompleted += OnAnimationCompleted;
 
                 var font = resourceCache.GetFont("/Fonts/Boxfont-round/Boxfont Round.ttf", 12);
 
@@ -571,9 +666,8 @@ namespace Content.Client.Wires.UI
                     Orientation = LayoutOrientation.Horizontal,
                     SeparationOverride = 4
                 };
-                hBox.AddChild(new Label
+                hBox.AddChild(_label = new Label
                 {
-                    Text = data.Text,
                     FontOverride = font,
                     FontColorOverride = Color.FromHex("#A1A6AE"),
                     VerticalAlignment = VAlignment.Center,
@@ -581,6 +675,66 @@ namespace Content.Client.Wires.UI
                 hBox.AddChild(lightContainer);
                 hBox.AddChild(new Control {MinSize = new Vector2(6, 0)});
                 AddChild(hBox);
+
+                SetData(data);
+            }
+
+            public void SetData(StatusLightData data)
+            {
+                if (_data is { } oldData &&
+                    oldData.Color == data.Color &&
+                    oldData.State == data.State &&
+                    oldData.Text == data.Text)
+                {
+                    return;
+                }
+
+                _data = data;
+                _label.Text = data.Text;
+
+                var hsv = Color.ToHsv(data.Color);
+                hsv.Z /= 2;
+                _inactiveLight.ModulateSelfOverride = Color.FromHsv(hsv);
+                _activeLight.ModulateSelfOverride = data.Color.WithAlpha(0.4f);
+                _activeLight.Visible = data.State != StatusLightState.Off;
+
+                UpdateAnimation(data.State);
+            }
+
+            private void UpdateAnimation(StatusLightState state)
+            {
+                if (_animationState == state)
+                    return;
+
+                _animationState = state;
+                _activeLight.StopAnimation(BlinkAnimationKey);
+                _activeLight.Modulate = Color.White;
+
+                if (GetAnimation(state) is { } animation)
+                    _activeLight.PlayAnimation(animation, BlinkAnimationKey);
+            }
+
+            private static Animation? GetAnimation(StatusLightState state)
+            {
+                return state switch
+                {
+                    StatusLightState.Off or StatusLightState.On => null,
+                    StatusLightState.BlinkingFast => _blinkingFast,
+                    StatusLightState.BlinkingSlow => _blinkingSlow,
+                    _ => throw new ArgumentOutOfRangeException(nameof(state), state, null)
+                };
+            }
+
+            private void OnAnimationCompleted(string key)
+            {
+                if (key != BlinkAnimationKey ||
+                    _data is not { } data ||
+                    GetAnimation(data.State) is not { } animation)
+                {
+                    return;
+                }
+
+                _activeLight.PlayAnimation(animation, key);
             }
         }
 

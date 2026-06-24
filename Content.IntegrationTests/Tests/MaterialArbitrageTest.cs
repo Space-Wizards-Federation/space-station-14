@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Content.IntegrationTests.Fixtures;
 using Content.Server.Cargo.Systems;
 using Content.Server.Construction.Completions;
-using Content.Server.Construction.Components;
+using Content.Shared.Construction.Components;
 using Content.Server.Destructible;
 using Content.Server.Destructible.Thresholds.Behaviors;
 using Content.Server.Lathe;

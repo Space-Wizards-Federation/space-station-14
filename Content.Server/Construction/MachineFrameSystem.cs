@@ -1,6 +1,6 @@
-using Content.Server.Construction.Components;
-using Content.Server.Stack;
 using Content.Shared.Construction.Components;
+using Content.Server.Stack;
+using Content.Shared.Construction;
 using Content.Shared.Examine;
 using Content.Shared.Interaction;
 using Content.Shared.Stacks;
@@ -11,13 +11,17 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Server.Construction;
 
-public sealed partial class MachineFrameSystem : EntitySystem
+public sealed partial class MachineFrameSystem : SharedMachineFrameSystem
 {
     [Dependency] private SharedContainerSystem _container = default!;
     [Dependency] private TagSystem _tag = default!;
     [Dependency] private StackSystem _stack = default!;
     [Dependency] private ConstructionSystem _construction = default!;
     [Dependency] private SharedPopupSystem _popupSystem = default!;
+    [Dependency] private EntityQuery<ConstructionComponent> _constructionQuery = default!;
+    [Dependency] private EntityQuery<MachineBoardComponent> _machineBoardQuery = default!;
+    [Dependency] private EntityQuery<StackComponent> _stackQuery = default!;
+    [Dependency] private EntityQuery<TagComponent> _tagQuery = default!;
 
     public override void Initialize()
     {
@@ -39,7 +43,7 @@ public sealed partial class MachineFrameSystem : EntitySystem
     {
         RegenerateProgress(component);
 
-        if (TryComp<ConstructionComponent>(uid, out var construction) && construction.TargetNode == null)
+        if (_constructionQuery.TryComp(uid, out var construction) && construction.TargetNode == null)
         {
             // Attempt to set pathfinding to the machine node...
             _construction.SetPathfindingTarget(uid, "machine", construction);
@@ -61,7 +65,7 @@ public sealed partial class MachineFrameSystem : EntitySystem
         // If this changes in the future, then RegenerateProgress() also needs to be updated.
         // Note that one entity is ALLOWED to satisfy more than one kind of component or tag requirements. This is
         // necessary in order to avoid weird entity-ordering shenanigans in RegenerateProgress().
-        if (TryComp<StackComponent>(args.Used, out var stack))
+        if (_stackQuery.TryComp(args.Used, out var stack))
         {
             if (TryInsertStack(uid, args.Used, component, stack))
                 args.Handled = true;
@@ -100,7 +104,7 @@ public sealed partial class MachineFrameSystem : EntitySystem
         }
 
         // Handle tag requirements
-        if (!TryComp<TagComponent>(args.Used, out var tagComp))
+        if (!_tagQuery.TryComp(args.Used, out var tagComp))
             return;
 
         foreach (var (tagName, info) in component.TagRequirements)
@@ -136,7 +140,7 @@ public sealed partial class MachineFrameSystem : EntitySystem
     /// <returns>Whether or not the function had any effect. Does not indicate success.</returns>
     private bool TryInsertBoard(EntityUid uid, EntityUid used, MachineFrameComponent component)
     {
-        if (!TryComp<MachineBoardComponent>(used, out var machineBoard))
+        if (!_machineBoardQuery.TryComp(used, out var machineBoard))
             return false;
 
         if (!_container.TryRemoveFromContainer(used))
@@ -148,7 +152,7 @@ public sealed partial class MachineFrameSystem : EntitySystem
         ResetProgressAndRequirements(component, machineBoard);
 
         // Reset edge so that prying the components off works correctly.
-        if (TryComp(uid, out ConstructionComponent? construction))
+        if (_constructionQuery.TryComp(uid, out var construction))
             _construction.ResetEdge(uid, construction);
 
         return true;
@@ -197,32 +201,6 @@ public sealed partial class MachineFrameSystem : EntitySystem
         return true;
     }
 
-    public bool IsComplete(MachineFrameComponent component)
-    {
-        if (!component.HasBoard)
-            return false;
-
-        foreach (var (type, amount) in component.MaterialRequirements)
-        {
-            if (component.MaterialProgress[type] < amount)
-                return false;
-        }
-
-        foreach (var (compName, info) in component.ComponentRequirements)
-        {
-            if (component.ComponentProgress[compName] < info.Amount)
-                return false;
-        }
-
-        foreach (var (tagName, info) in component.TagRequirements)
-        {
-            if (component.TagProgress[tagName] < info.Amount)
-                return false;
-        }
-
-        return true;
-    }
-
     public void ResetProgressAndRequirements(MachineFrameComponent component, MachineBoardComponent machineBoard)
     {
         component.MaterialRequirements = new Dictionary<ProtoId<StackPrototype>, int>(machineBoard.StackRequirements);
@@ -266,7 +244,7 @@ public sealed partial class MachineFrameSystem : EntitySystem
 
         var board = component.BoardContainer.ContainedEntities[0];
 
-        if (!TryComp<MachineBoardComponent>(board, out var machineBoard))
+        if (!_machineBoardQuery.TryComp(board, out var machineBoard))
             return;
 
         ResetProgressAndRequirements(component, machineBoard);
@@ -275,7 +253,7 @@ public sealed partial class MachineFrameSystem : EntitySystem
 
         foreach (var part in component.PartContainer.ContainedEntities)
         {
-            if (TryComp<StackComponent>(part, out var stack))
+            if (_stackQuery.TryComp(part, out var stack))
             {
                 var type = stack.StackTypeId;
 
@@ -302,7 +280,7 @@ public sealed partial class MachineFrameSystem : EntitySystem
                     component.ComponentProgress[compName]++;
             }
 
-            if (!TryComp<TagComponent>(part, out var tagComp))
+            if (!_tagQuery.TryComp(part, out var tagComp))
                 continue;
 
             // I have MANY regrets.

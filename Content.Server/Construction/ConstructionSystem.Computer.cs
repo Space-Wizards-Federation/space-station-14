@@ -1,4 +1,4 @@
-using Content.Server.Construction.Components;
+using Content.Shared.Construction.Components;
 using Content.Server.Power.Components;
 using Content.Shared.Computer;
 using Content.Shared.Power;
@@ -9,6 +9,8 @@ namespace Content.Server.Construction;
 public sealed partial class ConstructionSystem
 {
     [Dependency] private SharedAppearanceSystem _appearance = default!;
+    [Dependency] private EntityQuery<ApcPowerReceiverComponent> _apcPowerReceiverQuery = default!;
+    [Dependency] private EntityQuery<ConstructionComponent> _constructionQuery = default!;
 
     private void InitializeComputer()
     {
@@ -22,7 +24,7 @@ public sealed partial class ConstructionSystem
         // Let's ensure the container manager and container are here.
         _container.EnsureContainer<Container>(uid, "board");
 
-        if (TryComp<ApcPowerReceiverComponent>(uid, out var powerReceiver))
+        if (_apcPowerReceiverQuery.TryComp(uid, out var powerReceiver))
         {
             _appearance.SetData(uid, ComputerVisuals.Powered, powerReceiver.Powered);
         }
@@ -47,7 +49,7 @@ public sealed partial class ConstructionSystem
     {
         var component = ent.Comp;
         // Ensure that the construction component is aware of the board container.
-        if (TryComp<ConstructionComponent>(ent, out var construction))
+        if (_constructionQuery.TryComp(ent, out var construction))
             AddContainer(ent, "board", construction);
 
         // We don't do anything if this is null or empty.

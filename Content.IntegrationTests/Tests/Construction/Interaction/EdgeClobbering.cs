@@ -1,5 +1,5 @@
 using Content.IntegrationTests.Tests.Interaction;
-using Content.Server.Construction.Components;
+using Content.Shared.Construction.Components;
 using Content.Shared.Temperature;
 
 namespace Content.IntegrationTests.Tests.Construction.Interaction;

@@ -1,7 +1,6 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using Content.IntegrationTests.Fixtures;
-using Content.Server.Construction.Components;
 using Content.Shared.Construction.Components;
 using Robust.Shared.GameObjects;
 using Robust.Shared.Prototypes;

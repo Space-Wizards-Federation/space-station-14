@@ -1,7 +1,8 @@
-using Content.Server.Construction.Components;
+using Content.Shared.Construction.Components;
 using Content.Server.Stack;
 using Content.Shared.Construction;
 using Content.Shared.DoAfter;
+using Content.Shared.Popups;
 using JetBrains.Annotations;
 using Robust.Server.Containers;
 using Robust.Shared.Random;
@@ -18,6 +19,7 @@ namespace Content.Server.Construction
         [Dependency] private IRobustRandom _robustRandom = default!;
         [Dependency] private SharedDoAfterSystem _doAfterSystem = default!;
         [Dependency] private ContainerSystem _container = default!;
+        [Dependency] private SharedPopupSystem _popup = default!;
         [Dependency] private StackSystem _stackSystem = default!;
         [Dependency] private SharedToolSystem _toolSystem = default!;
 
