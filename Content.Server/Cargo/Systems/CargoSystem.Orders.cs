@@ -695,7 +695,15 @@ namespace Content.Server.Cargo.Systems
             var products = new List<ProtoId<CargoProductPrototype>>();
 
             // Note that a market must be both on the station and on the console to be available.
-            var markets = ent.Comp.AllowedGroups.Intersect(db.Markets).ToList();
+            // If the console is emagged it is considered to have access to every market.
+            // The station still needs the market so this won't give access to salvage rank rewards
+            var consoleMarkets = _emag.CheckFlag(ent, EmagType.Interaction)
+                ? _protoMan
+                    .EnumeratePrototypes<CargoMarketPrototype>()
+                    .Select(p => (ProtoId<CargoMarketPrototype>)p.ID)
+                    .ToList()
+                : ent.Comp.AllowedGroups;
+            var markets = consoleMarkets.Intersect(db.Markets).ToList();
             foreach (var product in _protoMan.EnumeratePrototypes<CargoProductPrototype>())
             {
                 if (!markets.Contains(product.Group))
