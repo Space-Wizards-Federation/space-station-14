@@ -89,7 +89,7 @@ LABEL_P1 = "P1: High"
 LABEL_CONFLICT = "S: Merge Conflict"
 
 REPO_CONFIG = [
-    Repo("space-wizards", "space-station-14", queries={
+    Repo("space-wizards-federation", "space-station-14", queries={
         # Issue queries
         "issue_total_count": IssueQuery(),
         "issue_open_count": IssueQuery(states=[IssueState.OPEN]),
@@ -109,7 +109,7 @@ REPO_CONFIG = [
         "pr_p1_count": PullRequestQuery(states=[PullRequestState.OPEN], labels=[LABEL_P1]),
         "pr_conflict_count": PullRequestQuery(states=[PullRequestState.OPEN], labels=[LABEL_CONFLICT]),
     }),
-    Repo("space-wizards", "RobustToolbox", queries={
+    Repo("space-wizards-federation", "RobustToolbox", queries={
         # Issue queries
         "issue_total_count": IssueQuery(),
         "issue_open_count": IssueQuery(states=[IssueState.OPEN]),
@@ -125,7 +125,7 @@ REPO_CONFIG = [
         "pr_needs_review_count": PullRequestQuery(states=[PullRequestState.OPEN], labels=[LABEL_NEEDS_REVIEW]),
         "pr_awaiting_changes_count": PullRequestQuery(states=[PullRequestState.OPEN], labels=[LABEL_AWAITING_CHANGES]),
     }),
-    Repo("space-wizards", "docs", queries={
+    Repo("space-wizards-federation", "docs", queries={
         # Issue queries
         "issue_total_count": IssueQuery(),
         "issue_open_count": IssueQuery(states=[IssueState.OPEN]),
