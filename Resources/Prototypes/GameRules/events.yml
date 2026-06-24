@@ -295,6 +295,8 @@
     earliestStart: 30
     reoccurrenceDelay: 60
     minimumPlayers: 30
+  - type: DynamicRuleCost
+    cost: 75
 
 # disabled until event is rewritten to be more interesting
 #- type: entity
