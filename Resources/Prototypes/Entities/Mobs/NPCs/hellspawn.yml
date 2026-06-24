@@ -5,7 +5,7 @@
   - MobCombat
   - MobBloodstream
   - BaseMobAnimal
-  - BaseSlicingRefinable
+  - BaseSlicingRefinableButchering
   id: MobHellspawn
   description: An unstoppable force of carnage.
   components:
