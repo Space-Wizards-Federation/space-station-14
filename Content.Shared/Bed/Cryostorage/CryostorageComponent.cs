@@ -63,7 +63,7 @@ public record struct CryostorageContainedPlayerData()
     public NetEntity PlayerEnt = NetEntity.Invalid;
 
     /// <summary>
-    /// A list of containing item data (id of the slot, user friendly display name of the slot, the name of the item inside of it)
+    /// A list containing item data (id of the slot, user friendly display name of the slot, the name of the item inside of it)
     /// </summary>
     public List<(string, string, string)> ItemSlots = new();
 
