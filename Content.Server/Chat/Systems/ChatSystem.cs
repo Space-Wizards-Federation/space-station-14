@@ -60,7 +60,9 @@ public sealed partial class ChatSystem : SharedChatSystem
         Subs.CVar(_configurationManager, CCVars.LoocEnabled, OnLoocEnabledChanged, true);
         Subs.CVar(_configurationManager, CCVars.DeadLoocEnabled, OnDeadLoocEnabledChanged, true);
         Subs.CVar(_configurationManager, CCVars.CritLoocEnabled, OnCritLoocEnabledChanged, true);
-
+        Subs.CVar(_configurationManager, CCVars.ChatFlaggedWordAhelpEnabled, value => _FlaggedWordAhelpEnabled = value, true);
+        Subs.CVar(_configurationManager, CCVars.ChatFlaggedWordAhelpWords, OnFlaggedWordListChanged, true);
+        Subs.CVar(_configurationManager, CCVars.ChatFlaggedWordAhelpCooldown, value => _FlaggedWordAhelpCooldown = value, true);
         SubscribeLocalEvent<GameRunLevelChangedEvent>(OnGameChange);
     }
 
@@ -198,6 +200,7 @@ public sealed partial class ChatSystem : SharedChatSystem
             return;
 
         // This message may have a radio prefix, and should then be whispered to the resolved radio channel
+        CheckFlaggedWords(player, message);
         if (checkRadioPrefix)
         {
             if (TryProcessRadioMessage(source, message, out var modMessage, out var channel))
@@ -264,6 +267,8 @@ public sealed partial class ChatSystem : SharedChatSystem
         RaiseLocalEvent(source, ref ev, true);
         if (ev.Cancelled)
             return;
+
+        CheckFlaggedWords(player, message);
 
         switch (sendType)
         {
