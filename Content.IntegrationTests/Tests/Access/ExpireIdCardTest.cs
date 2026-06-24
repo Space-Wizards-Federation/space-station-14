@@ -15,8 +15,8 @@ namespace Content.IntegrationTests.Tests.Access
     public sealed class ExpireIdCardTest : GameTest
     {
         private const string TestExpireIdCard = "TestExpireIdCard";
-        private static readonly ProtoId<AccessLevelPrototype> GenpopEnter = new("GenpopEnter");
-        private static readonly ProtoId<AccessLevelPrototype> GenpopLeave = new("GenpopLeave");
+        private static readonly ProtoId<AccessLevelPrototype> GenpopEnter = "GenpopEnter";
+        private static readonly ProtoId<AccessLevelPrototype> GenpopLeave = "GenpopLeave";
 
         [TestPrototypes]
         private const string Prototypes = $@"
