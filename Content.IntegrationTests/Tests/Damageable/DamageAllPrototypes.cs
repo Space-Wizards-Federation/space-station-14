@@ -1,60 +1,73 @@
-using System.Numerics;
-using System.Runtime.CompilerServices;
 using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
-using Content.IntegrationTests.Utility;
 using Content.Shared.Damage;
 using Content.Shared.Damage.Components;
 using Content.Shared.Damage.Prototypes;
 using Content.Shared.Damage.Systems;
 using Content.Shared.FixedPoint;
-using Robust.Shared.Map;
+using Content.Shared.Prototypes;
+using Robust.Shared.GameObjects;
+using Robust.Shared.Prototypes;
 
 namespace Content.IntegrationTests.Tests.Damageable;
 
-[TestFixture]
 [TestOf(typeof(DamageableComponent))]
 [TestOf(typeof(DamageableSystem))]
 public sealed class DamageAllPrototypesTest : GameTest
 {
-    [SidedDependency(Side.Server)] private readonly DamageableSystem _damageableSystem = default!;
+    [SidedDependency(Side.Server)]
+    private readonly DamageableSystem _damageableSystem = default!;
 
-    private static string[] _damageables = GameDataScrounger.EntitiesWithComponent("Damageable");
+    [SidedDependency(Side.Server)]
+    private readonly IComponentFactory _sComp = default!;
 
     [Test]
     [TestOf(typeof(DamageableSystem))]
-    [TestCaseSource(nameof(_damageables))]
     [Description("Ensures all Entity Prototypes with damageable can be damaged.")]
-    public async Task TestDamageableComponents(string damageable)
+    public async Task TestDamageableComponentsOnPrototypes()
     {
-        var map = await Pair.CreateTestMap();
+        await Pair.CreateTestMap();
+        var coords = Pair.TestMap!.GridCoords;
+        var protoIds = Pair.GetPrototypesWithComponent<DamageableComponent>();
 
-        var entity = await SpawnAtPosition(damageable, map.GridCoords);
+        var damageTypes = SProtoMan.EnumeratePrototypes<DamageTypePrototype>();
 
-        // Intentionally cannot take damage, ignore it.
-        if (SEntMan.HasComponent<GodmodeComponent>(entity))
-            return;
-
-        var canBeDamaged = false;
-
-        foreach (var type in SProtoMan.EnumeratePrototypes<DamageTypePrototype>())
+        foreach (var (damageable, comp) in protoIds)
         {
-            if (!_damageableSystem.CanBeDamagedBy(entity, type))
-                continue;
+            // Intentionally cannot take damage, ignore it.
+            if (damageable.HasComponent<GodmodeComponent>(_sComp))
+                return;
 
-            canBeDamaged = true;
+            var entity = await SpawnAtPosition(damageable.ID, coords);
 
-            await Server.WaitPost(() =>
+            var canBeDamaged = false;
+
+            foreach (var type in damageTypes)
             {
-                var damage = new DamageSpecifier(type, FixedPoint2.Epsilon);
-                var previousDamage = _damageableSystem.GetTotalDamage(entity);
-                _damageableSystem.ChangeDamage(entity, damage, ignoreResistances: true);
-                Assert.That(_damageableSystem.GetTotalDamage(entity) == FixedPoint2.Epsilon + previousDamage);
-                _damageableSystem.ClearAllDamage(entity);
-            });
-        }
+                if (!_damageableSystem.CanBeDamagedBy(entity, type))
+                    continue;
 
-        // Ensure that this entity can actually be damaged.
-        Assert.That(canBeDamaged);
+                canBeDamaged = true;
+
+                await Server.WaitPost(() =>
+                {
+                    var damage = new DamageSpecifier(type, FixedPoint2.Epsilon);
+                    var previousDamage = _damageableSystem.GetTotalDamage(entity);
+                    _damageableSystem.ChangeDamage(entity, damage, ignoreResistances: true);
+                    Assert.That(
+                        _damageableSystem.GetTotalDamage(entity),
+                        Is.EqualTo(FixedPoint2.Epsilon + previousDamage),
+                        $"{nameof(EntityPrototype)} {damageable.ID} takes incorrect damage from {nameof(DamageTypePrototype)} {type.ID}"
+                    );
+                    _damageableSystem.ClearAllDamage(entity);
+                });
+            }
+            // Ensure that this entity can actually be damaged.
+            Assert.That(
+                canBeDamaged,
+                $"prototype {damageable.ID} has {nameof(DamageableComponent)} but can not take any types of damage"
+            );
+            SQueueDel(entity);
+        }
     }
 }
