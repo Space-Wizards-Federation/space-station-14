@@ -202,9 +202,9 @@
     - Tail
 
 - type: entity
+  abstract: true
   parent: ClothingOuterEVASuitBase
   id: ClothingOuterEVASuitBaseToggleable
-  abstract: true
   components:
   - type: ToggleableClothing
     slot: head
