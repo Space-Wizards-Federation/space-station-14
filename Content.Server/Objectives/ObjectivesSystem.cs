@@ -13,6 +13,7 @@ using System.Linq;
 using System.Text;
 using Content.Server.Objectives.Commands;
 using Content.Shared.CCVar;
+using Content.Shared.Objectives.Prototypes;
 using Content.Shared.Prototypes;
 using Content.Shared.Roles.Jobs;
 using Robust.Server.Player;
@@ -209,6 +210,11 @@ public sealed partial class ObjectivesSystem : SharedObjectivesSystem
                         ));
                     }
                 }
+
+                var agentMindAppend = new MindAgentTextAppendEvent("", objectiveGroup.Key);
+                RaiseLocalEvent(mindId, ref agentMindAppend);
+
+                agentSummary.AppendLine(agentMindAppend.Text);
             }
 
             var successRate = totalObjectives > 0 ? (float) completedObjectives / totalObjectives : 0f;
@@ -343,3 +349,9 @@ public record struct ObjectivesTextGetInfoEvent(List<(EntityUid, string)> Minds,
 /// </summary>
 [ByRefEvent]
 public record struct ObjectivesTextPrependEvent(string Text);
+
+/// <summary>
+/// Raised on the mind after it's agent data is added, letting you append something.
+/// </summary>
+[ByRefEvent]
+public record struct MindAgentTextAppendEvent(string Text, ProtoId<ObjectiveIssuerPrototype> Issuer);
