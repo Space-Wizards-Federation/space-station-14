@@ -157,6 +157,9 @@ public abstract partial class SharedEventHorizonSystem : EntitySystem
         || !Resolve(uid, ref fixtures, logMissing: false))
             return;
 
+        // Negative event horizon radius disables periodic consumption, but physics shapes cannot have a negative radius.
+        var fixtureRadius = MathF.Max(0f, eventHorizon.Radius);
+
         // Update both fixtures the event horizon is associated with:
         var consumer = _fixtures.GetFixtureOrNull(uid, consumerId, fixtures);
         if (consumer != null)
