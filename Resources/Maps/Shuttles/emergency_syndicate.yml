@@ -1,16 +1,16 @@
 meta:
   format: 7
-  category: Grid
-  engineVersion: 268.0.0
+  category: Map
+  engineVersion: 277.2.0
   forkId: ""
   forkVersion: ""
-  time: 12/22/2025 00:21:49
-  entityCount: 656
-maps: []
+  time: 06/25/2026 20:32:03
+  entityCount: 662
+maps:
+- 39
 grids:
 - 1
-orphans:
-- 1
+orphans: []
 nullspace: []
 tilemap:
   2: Space
@@ -26,7 +26,7 @@ entities:
       name: GL Evac Serpent
     - type: Transform
       pos: -0.46875,-0.46875
-      parent: invalid
+      parent: 39
     - type: MapGrid
       chunks:
         0,0:
@@ -83,6 +83,214 @@ entities:
             3: -6,-21
             4: -6,-22
             5: -5,-22
+        - node:
+            color: '#334E6DC8'
+            id: BrickTileWhiteCornerNe
+          decals:
+            43: 1,-1
+            56: 5,-1
+            62: 6,-2
+            100: 2,-11
+        - node:
+            color: '#79150096'
+            id: BrickTileWhiteCornerNe
+          decals:
+            70: -3,-1
+        - node:
+            color: '#A4610696'
+            id: BrickTileWhiteCornerNe
+          decals:
+            87: -1,-20
+        - node:
+            color: '#334E6DC8'
+            id: BrickTileWhiteCornerNw
+          decals:
+            55: 3,-1
+            99: -2,-11
+            111: -2,-11
+        - node:
+            color: '#79150096'
+            id: BrickTileWhiteCornerNw
+          decals:
+            35: -1,-1
+            71: -5,-1
+            72: -6,-2
+        - node:
+            color: '#A4610696'
+            id: BrickTileWhiteCornerNw
+          decals:
+            88: -6,-20
+        - node:
+            color: '#334E6DC8'
+            id: BrickTileWhiteCornerSe
+          decals:
+            54: 6,-6
+            102: 2,-14
+        - node:
+            color: '#79150096'
+            id: BrickTileWhiteCornerSe
+          decals:
+            73: -3,-6
+        - node:
+            color: '#A4610696'
+            id: BrickTileWhiteCornerSe
+          decals:
+            89: -1,-22
+        - node:
+            color: '#334E6DC8'
+            id: BrickTileWhiteCornerSw
+          decals:
+            53: 3,-6
+            101: -2,-14
+        - node:
+            color: '#79150096'
+            id: BrickTileWhiteCornerSw
+          decals:
+            74: -6,-6
+        - node:
+            color: '#A4610696'
+            id: BrickTileWhiteCornerSw
+          decals:
+            90: -6,-22
+        - node:
+            color: '#334E6DC8'
+            id: BrickTileWhiteInnerNe
+          decals:
+            66: 5,-2
+        - node:
+            color: '#79150096'
+            id: BrickTileWhiteInnerNw
+          decals:
+            33: -5,-2
+            69: -5,-2
+        - node:
+            color: '#334E6DC8'
+            id: BrickTileWhiteLineE
+          decals:
+            44: 1,-2
+            45: 1,-3
+            46: 1,-4
+            47: 1,-5
+            48: 1,-6
+            49: 1,-7
+            50: 6,-3
+            51: 6,-4
+            52: 6,-5
+            106: 2,-13
+            107: 2,-12
+        - node:
+            color: '#79150096'
+            id: BrickTileWhiteLineE
+          decals:
+            76: -3,-5
+            77: -3,-4
+            78: -3,-3
+            79: -3,-2
+        - node:
+            color: '#A4610696'
+            id: BrickTileWhiteLineE
+          decals:
+            86: -1,-21
+        - node:
+            color: '#334E6DC8'
+            id: BrickTileWhiteLineN
+          decals:
+            57: 4,-1
+            108: 1,-11
+            109: 0,-11
+            110: -1,-11
+        - node:
+            color: '#79150096'
+            id: BrickTileWhiteLineN
+          decals:
+            42: 0,-1
+            80: -4,-1
+            81: -4,-1
+        - node:
+            color: '#A4610696'
+            id: BrickTileWhiteLineN
+          decals:
+            95: -4,-20
+            96: -5,-20
+            97: -3,-20
+            98: -2,-20
+        - node:
+            color: '#334E6DC8'
+            id: BrickTileWhiteLineS
+          decals:
+            63: 4,-6
+            64: 5,-6
+            103: -1,-14
+            104: 0,-14
+            105: 1,-14
+        - node:
+            color: '#79150096'
+            id: BrickTileWhiteLineS
+          decals:
+            67: -5,-6
+            75: -4,-6
+        - node:
+            color: '#A4610696'
+            id: BrickTileWhiteLineS
+          decals:
+            91: -4,-22
+            92: -5,-22
+            93: -3,-22
+            94: -2,-22
+        - node:
+            color: '#334E6DC8'
+            id: BrickTileWhiteLineW
+          decals:
+            58: 3,-2
+            59: 3,-3
+            60: 3,-4
+            61: 2,-5
+            65: 3,-5
+            112: -2,-12
+            113: -2,-13
+        - node:
+            color: '#79150096'
+            id: BrickTileWhiteLineW
+          decals:
+            36: -1,-3
+            37: -1,-2
+            38: -1,-4
+            39: -1,-5
+            40: -1,-6
+            41: -1,-7
+            82: -6,-3
+            83: -6,-4
+            84: -6,-5
+        - node:
+            color: '#A4610696'
+            id: BrickTileWhiteLineW
+          decals:
+            85: -6,-21
+        - node:
+            color: '#334E6DC8'
+            id: FullTileOverlayGreyscale
+          decals:
+            114: 0,-12
+        - node:
+            color: '#334E6DC8'
+            id: HalfTileOverlayGreyscale
+          decals:
+            118: 0,-13
+        - node:
+            color: '#334E6DC8'
+            id: HalfTileOverlayGreyscale180
+          decals:
+            117: 0,-11
+        - node:
+            color: '#334E6DC8'
+            id: HalfTileOverlayGreyscale270
+          decals:
+            116: 1,-12
+        - node:
+            color: '#334E6DC8'
+            id: HalfTileOverlayGreyscale90
+          decals:
+            115: -1,-12
         - node:
             angle: 1.5707963267948966 rad
             color: '#FFFFFFFF'
@@ -195,6 +403,18 @@ entities:
     - type: GasTileOverlay
     - type: RadiationGridResistance
     - type: ExplosionAirtightGrid
+    - type: TileHistory
+      chunkHistory: {}
+  - uid: 39
+    components:
+    - type: MetaData
+      name: Map Entity
+    - type: Transform
+    - type: Map
+      mapPaused: True
+    - type: GridTree
+    - type: Broadphase
+    - type: OccluderTree
 - proto: AirlockCargoGlassLocked
   entities:
   - uid: 446
@@ -337,102 +557,88 @@ entities:
       rot: 1.5707963267948966 rad
       pos: -2.5,-13.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 244
     components:
     - type: Transform
       pos: -0.5,-18.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 245
     components:
     - type: Transform
       pos: 2.5,-18.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 247
     components:
     - type: Transform
       rot: -1.5707963267948966 rad
       pos: -1.5,-1.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 248
     components:
     - type: Transform
       rot: 1.5707963267948966 rad
       pos: 2.5,-1.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 249
     components:
     - type: Transform
       rot: 3.141592653589793 rad
       pos: 0.5,-18.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 250
     components:
     - type: Transform
       pos: 2.5,-6.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
 - proto: AtmosDeviceFanDirectional
   entities:
-  - uid: 39
-    components:
-    - type: Transform
-      rot: -1.5707963267948966 rad
-      pos: 7.5,-17.5
-      parent: 1
   - uid: 425
     components:
     - type: Transform
-      rot: 1.5707963267948966 rad
-      pos: -6.5,-7.5
+      rot: -1.5707963267948966 rad
+      pos: -6.5,-15.5
       parent: 1
   - uid: 426
     components:
     - type: Transform
       rot: 1.5707963267948966 rad
-      pos: -6.5,-9.5
+      pos: 7.5,-7.5
       parent: 1
   - uid: 427
     components:
     - type: Transform
       rot: 1.5707963267948966 rad
-      pos: -6.5,-15.5
+      pos: 7.5,-9.5
       parent: 1
   - uid: 428
     components:
     - type: Transform
       rot: 1.5707963267948966 rad
-      pos: -6.5,-17.5
+      pos: 7.5,-15.5
       parent: 1
   - uid: 429
     components:
     - type: Transform
-      rot: -1.5707963267948966 rad
-      pos: 7.5,-15.5
+      rot: 1.5707963267948966 rad
+      pos: 7.5,-17.5
       parent: 1
   - uid: 430
     components:
     - type: Transform
       rot: -1.5707963267948966 rad
-      pos: 7.5,-9.5
+      pos: -6.5,-17.5
       parent: 1
   - uid: 431
     components:
     - type: Transform
       rot: -1.5707963267948966 rad
-      pos: 7.5,-7.5
+      pos: -6.5,-9.5
+      parent: 1
+  - uid: 443
+    components:
+    - type: Transform
+      rot: -1.5707963267948966 rad
+      pos: -6.5,-7.5
       parent: 1
 - proto: AtmosFixAirMarker
   entities:
@@ -1365,12 +1571,6 @@ entities:
       rot: -1.5707963267948966 rad
       pos: 2.5,-20.5
       parent: 1
-  - uid: 443
-    components:
-    - type: Transform
-      rot: -1.5707963267948966 rad
-      pos: 4.5,-20.5
-      parent: 1
 - proto: Chair
   entities:
   - uid: 120
@@ -1667,6 +1867,28 @@ entities:
       rot: 1.5707963267948966 rad
       pos: 3.5,-5.5
       parent: 1
+  - uid: 662
+    components:
+    - type: Transform
+      rot: 3.141592653589793 rad
+      pos: 3.5,-1.5
+      parent: 1
+- proto: CigarGoldCase
+  entities:
+  - uid: 659
+    components:
+    - type: Transform
+      rot: -1.5707963267948966 rad
+      pos: 4.4820623,-5.70048
+      parent: 1
+- proto: CigPackSyndicate
+  entities:
+  - uid: 571
+    components:
+    - type: Transform
+      rot: 1.5707963267948966 rad
+      pos: 4.4976873,-5.26298
+      parent: 1
 - proto: ClosetEmergencyFilledRandom
   entities:
   - uid: 534
@@ -1694,77 +1916,71 @@ entities:
       rot: -1.5707963267948966 rad
       pos: 7.5,-11.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 538
     components:
     - type: Transform
       rot: 1.5707963267948966 rad
       pos: -6.5,-11.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 539
     components:
     - type: Transform
       rot: 3.141592653589793 rad
       pos: 6.5,-18.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 540
     components:
     - type: Transform
       rot: 3.141592653589793 rad
       pos: 6.5,-18.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 541
     components:
     - type: Transform
       rot: 3.141592653589793 rad
       pos: -5.5,-18.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 542
     components:
     - type: Transform
       pos: -5.5,-6.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 543
     components:
     - type: Transform
       pos: 6.5,-6.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 548
     components:
     - type: Transform
       pos: 3.5,-14.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 550
     components:
     - type: Transform
       rot: 1.5707963267948966 rad
       pos: 2.5,-4.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 551
     components:
     - type: Transform
       rot: -1.5707963267948966 rad
       pos: -1.5,-4.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
+- proto: ClosetWallEmergencyN2FilledRandom
+  entities:
+  - uid: 660
+    components:
+    - type: Transform
+      rot: 1.5707963267948966 rad
+      pos: -6.5,-12.5
+      parent: 1
+  - uid: 661
+    components:
+    - type: Transform
+      rot: -1.5707963267948966 rad
+      pos: 7.5,-12.5
+      parent: 1
 - proto: ClosetWallFireFilledRandom
   entities:
   - uid: 544
@@ -1773,32 +1989,24 @@ entities:
       rot: -1.5707963267948966 rad
       pos: -2.5,-9.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 545
     components:
     - type: Transform
       rot: 1.5707963267948966 rad
       pos: 3.5,-9.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 547
     components:
     - type: Transform
       rot: -1.5707963267948966 rad
       pos: -1.5,-5.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 549
     components:
     - type: Transform
       rot: 1.5707963267948966 rad
       pos: 2.5,-5.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
 - proto: ClothingBackpackDuffelSyndicateFilledMedical
   entities:
   - uid: 583
@@ -2703,6 +2911,13 @@ entities:
     - type: Transform
       pos: -3.5,-3.5
       parent: 1
+- proto: InterdyneFlippo
+  entities:
+  - uid: 658
+    components:
+    - type: Transform
+      pos: 4.2008123,-5.341105
+      parent: 1
 - proto: LockerEvacRepairFilled
   entities:
   - uid: 444
@@ -2997,8 +3212,6 @@ entities:
       rot: -1.5707963267948966 rad
       pos: 4.5,-18.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
 - proto: PosterContrabandCybersun600
   entities:
   - uid: 592
@@ -3006,8 +3219,6 @@ entities:
     - type: Transform
       pos: 3.5,-6.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
 - proto: PosterContrabandDonk
   entities:
   - uid: 593
@@ -3015,8 +3226,6 @@ entities:
     - type: Transform
       pos: -1.5,-18.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
 - proto: PosterContrabandEnlistGorlex
   entities:
   - uid: 591
@@ -3024,8 +3233,6 @@ entities:
     - type: Transform
       pos: -1.5,-6.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
 - proto: PosterContrabandInterdyne
   entities:
   - uid: 578
@@ -3033,15 +3240,11 @@ entities:
     - type: Transform
       pos: 2.5,-9.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 579
     components:
     - type: Transform
       pos: -1.5,-14.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
 - proto: PowerCellMedium
   entities:
   - uid: 582
@@ -3240,33 +3443,24 @@ entities:
       rot: 1.5707963267948966 rad
       pos: -6.5,-14.5
       parent: 1
-    - type: DeviceNetwork
-    - type: Fixtures
-      fixtures: {}
   - uid: 634
     components:
     - type: Transform
       rot: 1.5707963267948966 rad
       pos: 7.5,-10.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 635
     components:
     - type: Transform
       rot: 1.5707963267948966 rad
       pos: -6.5,-10.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 636
     components:
     - type: Transform
       rot: 1.5707963267948966 rad
       pos: 7.5,-14.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
 - proto: SMESAdvanced
   entities:
   - uid: 237
@@ -3312,29 +3506,21 @@ entities:
     - type: Transform
       pos: 6.5,0.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 597
     components:
     - type: Transform
       pos: -5.5,0.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 598
     components:
     - type: Transform
       pos: -2.5,-14.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
   - uid: 599
     components:
     - type: Transform
       pos: 1.5,-18.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
 - proto: Table
   entities:
   - uid: 555
@@ -3467,14 +3653,12 @@ entities:
   - uid: 630
     components:
     - type: Transform
-      pos: 4.445096,-5.35236
+      pos: 5.2164373,-5.60673
       parent: 1
-- proto: VendingMachineMedical
+- proto: VendingMachineMedicalBaseSyndicate
   entities:
-  - uid: 571
+  - uid: 573
     components:
-    - type: MetaData
-      name: Syndimed plus
     - type: Transform
       pos: -1.5,-10.5
       parent: 1
@@ -3492,27 +3676,19 @@ entities:
     - type: Transform
       pos: 0.5,-17.5
       parent: 1
-- proto: VendingMachineWallMedical
+- proto: VendingMachineWallMedicalCivilianSyndicate
   entities:
   - uid: 572
     components:
-    - type: MetaData
-      name: Interdyne medical vendor
-    - type: Transform
-      pos: -1.5,-9.5
-      parent: 1
-    - type: Fixtures
-      fixtures: {}
-  - uid: 573
-    components:
-    - type: MetaData
-      name: Interdyne medical vendor
     - type: Transform
       rot: 3.141592653589793 rad
+      pos: -1.5,-9.5
+      parent: 1
+  - uid: 657
+    components:
+    - type: Transform
       pos: 2.5,-14.5
       parent: 1
-    - type: Fixtures
-      fixtures: {}
 - proto: WallPlastitanium
   entities:
   - uid: 10
