@@ -7,9 +7,9 @@ namespace Content.Client.TextScreen;
 public sealed partial class TextScreenVisualsComponent : Component
 {
     /// <summary>
-    ///     1/32 - the size of a pixel
+    ///     The size of a pixel.
     /// </summary>
-    public const float PixelSize = 1f / EyeManager.PixelsPerMeter;
+    public static readonly float PixelSize = 1f / EyeManager.PixelsPerMeter;
 
     /// <summary>
     ///     The color of the text drawn.
