@@ -477,9 +477,9 @@ public abstract partial class SharedStunSystem
                 if (!fixture.Hard || (fixture.CollisionMask & StandingStateSystem.StandingCollisionLayer) != StandingStateSystem.StandingCollisionLayer)
                     continue;
 
-                for (var i = 0; i < fixture.Shape.ChildCount; i++)
+                for (var i = 0; i < _physics.GetChildCount(fixture.Shape); i++)
                 {
-                    var intersection = fixture.Shape.ComputeAABB(xform, i).IntersectPercentage(ourAABB);
+                    var intersection = _physics.ComputeAABB(fixture.Shape, xform, i).IntersectPercentage(ourAABB);
                     if (intersection > 0.1f)
                         return true;
                 }

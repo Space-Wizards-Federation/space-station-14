@@ -164,14 +164,14 @@ public abstract partial class SharedEventHorizonSystem : EntitySystem
         var consumer = _fixtures.GetFixtureOrNull(uid, consumerId, fixtures);
         if (consumer != null)
         {
-            _physics.SetRadius(uid, consumerId, consumer, consumer.Shape, fixtureRadius, fixtures);
+            _physics.SetRadius((uid, fixtures, null, null), consumerId, consumer, consumer.Shape, fixtureRadius);
             _physics.SetHard(uid, consumer, false, fixtures);
         }
 
         var collider = _fixtures.GetFixtureOrNull(uid, colliderId, fixtures);
         if (collider != null)
         {
-            _physics.SetRadius(uid, colliderId, collider, collider.Shape, fixtureRadius, fixtures);
+            _physics.SetRadius((uid, fixtures, null, null), colliderId, collider, collider.Shape, fixtureRadius);
             _physics.SetHard(uid, collider, true, fixtures);
         }
 
