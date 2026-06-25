@@ -77,6 +77,7 @@ public sealed partial class DisplacementMapSystem : EntitySystem
         // We choose a displacement map from the possible ones, matching the size with the original layer size.
         // If there is no such a map, we use the standard default one (guaranteed present by the check above).
         var displacementDataLayer = data.SizeMaps[DefaultDisplacementSize];
+        var actualRSI = _sprite.LayerGetEffectiveRsi(sprite.AsNullable(), index);
         if (actualRSI is not null)
         {
             if (actualRSI.Size.X != actualRSI.Size.Y)
