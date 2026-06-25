@@ -15,6 +15,8 @@ public sealed partial class DisplacementMapSystem : EntitySystem
     //needs to be replaced later: see comment on line 48
     private static readonly ProtoId<ShaderPrototype> UnshadedID = "unshaded";
 
+    private const int DefaultDisplacementSize = 32;
+    
     private static string? BuildDisplacementLayerKey(object key)
     {
         return key.ToString() is null ? null : $"{key}-displacement";
@@ -66,16 +68,15 @@ public sealed partial class DisplacementMapSystem : EntitySystem
             };
         }
 
-        if (!data.SizeMaps.ContainsKey(32))
+        if (!data.SizeMaps.ContainsKey(DefaultDisplacementSize))
         {
-            Log.Error($"DISPLACEMENT: {displacementKey} don't have 32x32 default displacement map");
+            Log.Error($"DISPLACEMENT: {displacementKey} don't have {DefaultDisplacementSize}x{DefaultDisplacementSize} default displacement map");
             return false;
         }
 
         // We choose a displacement map from the possible ones, matching the size with the original layer size.
-        // If there is no such a map, we use a standard 32 by 32 one
-        var displacementDataLayer = data.SizeMaps[EyeManager.PixelsPerMeter];
-        var actualRSI = _sprite.LayerGetEffectiveRsi(sprite.AsNullable(), index);
+        // If there is no such a map, we use the standard default one (guaranteed present by the check above).
+        var displacementDataLayer = data.SizeMaps[DefaultDisplacementSize];
         if (actualRSI is not null)
         {
             if (actualRSI.Size.X != actualRSI.Size.Y)
