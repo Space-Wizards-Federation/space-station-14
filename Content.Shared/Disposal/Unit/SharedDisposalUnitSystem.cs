@@ -133,7 +133,6 @@ public abstract partial class SharedDisposalUnitSystem : EntitySystem
 
     private void OnDestruction(Entity<DisposalUnitComponent> ent, ref DestructionEventArgs args)
     {
-        EjectContents(ent);
         ent.Comp.IsDeleted = true;
     }
 
